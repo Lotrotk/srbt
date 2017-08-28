@@ -54,3 +54,7 @@ Module::Member::Member(OMPropertyPtr const &property) : Member(PropertyPtr(prope
 Module::Member::Member(WMPropertyPtr const &property) : Member(PropertyPtr(property))
 {
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+id_t Module::_sModuleID{id_t(PrimitiveType::kCustom)};

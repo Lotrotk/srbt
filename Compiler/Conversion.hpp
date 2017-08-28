@@ -3,8 +3,6 @@
 #include "Module.hpp"
 #include "Operators_Unary.hpp"
 
-#include "Struct.hpp"
-
 namespace SRBT
 {
 namespace Compiler
@@ -25,7 +23,7 @@ namespace Conversion
 	RPropertyPtr tryToReal(PropertyPtr const & property, std::string & errorMessage);
 	WPropertyPtr tryToWord(PropertyPtr const & property, std::string & errorMessage);
 
-	PropertyPtr tryTo(Property::Type type, PropertyPtr const & property, ModuleReader const & reader, Compiler::FileOrigin const & origin, std::string & errorMessage);
+	PropertyPtr tryTo(PrimitiveType type, PropertyPtr const & property, ModuleReader const & reader, Compiler::FileOrigin const & origin, std::string & errorMessage);
 }
 }
 }

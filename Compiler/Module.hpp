@@ -66,29 +66,39 @@ namespace Compiler
 			explicit Member(RMPropertyPtr const & property);
 			explicit Member(OMPropertyPtr const & property);
 			explicit Member(WMPropertyPtr const & property);
-			explicit Member(Property::Type const type) : _type(type) {}
+			explicit Member(CompleteType const &type) : _type(type) {}
 
-			Property::Type type() const { return _type; }
+			CompleteType type() const { return _type; }
 			PropertyPtr const & property() const { return _property; }
 
 		private:
 			explicit Member(PropertyPtr const &);
 
 		private:
-			Property::Type _type;
+			CompleteType _type;
 			PropertyPtr _property;
 		};
 
 		using Properties = std::map<std::string, Member>;
+		using id_t = unsigned int;
 
 	public:
-		explicit Module(OriginUPtr inOrigin) : _origin(std::move(inOrigin)) {}
+		explicit Module(OriginUPtr inOrigin) : _origin(std::move(inOrigin)), _moduleId(++_sModuleID), _object_type{id_t(_moduleId)}, _struct_type{PrimitiveType::kStruct, _object_type.front()} {}
 
 		Origin const & origin() const { return *_origin; }
+
+		id_t moduleId() const { return _moduleId; }
+		CompleteType &objectType() const { return _object_type; }
+		CompleteType &structType() const { return _struct_type; }
 
 	private:
 		OriginUPtr _origin;
 		Properties _properties;
+		id_t _moduleId;
+		CompleteType _object_type;
+		CompleteType _struct_type;
+
+		static id_t _sModuleID;
 
 	private:
 		friend class MAccess;

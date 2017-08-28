@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Compiler/Struct.hpp"
+#include "ConstantProperties.hpp"
 
 namespace SRBT
 {

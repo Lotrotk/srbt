@@ -179,7 +179,6 @@ namespace Operators
 	/*override from Property*/
 	public:
 		bool constant() const override { return _arg->constant(); }
-		bool dependend_on_property(Module const & module, std::string const & name) const override { return _arg->dependend_on_property(module, name); }
 
 	/*override from ValueProperty*/
 	public:

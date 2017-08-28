@@ -1,7 +1,6 @@
 set(HEADERS
 	ConstantProperties.hpp
 	Conversion.hpp
-	forwarddeclare.hpp
 	Module.hpp
 	MutableProperties.hpp
 	Operators.hpp
@@ -10,7 +9,6 @@ set(HEADERS
     PropertyNames.hpp
 	ReferencedProperties.hpp
 	Regex.hpp
-	Struct.hpp
 )
 
 set(SOURCES
@@ -24,7 +22,6 @@ set(SOURCES
     PropertyNames.cpp
 	ReferencedProperties.cpp
 	Regex.cpp
-	Struct.cpp
 )
 
 add_library(compiler ${SOURCES} ${HEADERS})

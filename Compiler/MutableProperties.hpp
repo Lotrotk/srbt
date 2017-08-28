@@ -12,10 +12,7 @@ namespace Compiler
 		public ValueProperty<type_def>
 	{
 	public:
-		using value_t = typename type_def::value_t;
-		using in_t = typename type_def::in_t;
 		using return_t = typename type_def::return_t;
-		using value_return_t = typename type_def::value_return_t;
 		using ptr_t = std::shared_ptr<ValueProperty<type_def>>;
 		using delegate_t = ValueProperty<type_def>;
 		using delegate_ptr_t = std::shared_ptr<delegate_t>;
@@ -28,7 +25,6 @@ namespace Compiler
 	/*override from Property*/
 	public:
 		bool constant() const override { return !_isEverReassigned; }
-		bool dependend_on_property(Module const & module, std::string const & name) const override { return _value->dependend_on_property(module, name); }
 		void reduce(ptr_t & ioSelf) override
 		{
 			_value->reduce(_value);

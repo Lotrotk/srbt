@@ -11,8 +11,6 @@ namespace Compiler
 	public:
 		ReferencedPropertyData(OPropertyPtr const & object, std::string const & member) : _object(object), _member(member) {}
 
-		bool dependend_on_property(Module const &, std::string const & name) const;
-
 	public:
 		OPropertyPtr _object;
 		std::string _member;
@@ -35,7 +33,6 @@ namespace Compiler
 	/*override from Property*/
 	public:
 		bool constant() const override { return false; }
-		bool dependend_on_property(Module const & module, std::string const & name) const override { return _data.dependend_on_property(module, name); }
 
 	public:
 		/*override from ValueProperty*/

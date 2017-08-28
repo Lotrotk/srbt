@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Utils/Macros.hpp"
 #include "Utils/Sharedpointer.hpp"
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace SRBT
 {
@@ -15,34 +17,24 @@ namespace Compiler
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	namespace prvt
+	enum struct PrimitiveType
 	{
-		template<typename value_t, typename return_t>
-		struct value_return
-		{
-			inline static return_t ret(value_t const & value)
-			{
-				return value;
-			}
-		};
-	}
+		kBool,
+		kInteger,
+		kReal,
+		kWord,
+		kObject,
+		kStruct,
+		kLinearContainer,
+		kCustom = 100,
+	};
+
+	using CompleteType = std::vector<PrimitiveType> const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	class Property
 	{
-	public:
-		enum struct Type
-		{
-			kBool,
-			kInteger,
-			kReal,
-			kWord,
-			kObject,
-			kStruct,
-			kUndefined,
-		};
-
 	public:
 		virtual ~Property() = default;
 
@@ -52,31 +44,30 @@ namespace Compiler
 		 */
 		virtual void reduce(PropertyPtr & ioSelf) {}
 
-	/*abstract*/
-	public:
 		virtual bool constant() const = 0;
-		virtual Type type() const = 0;
-		virtual bool dependend_on_property(Module const &, std::string const & name) const = 0;
+		virtual CompleteType const &type() const = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	template<typename type_def>
-	class ValueProperty
-	:
-		public Property
-	{
+	class ValueProperty : public Property
+	{	
 	public:
-		static constexpr Type type_v = type_def::type_v;
 		using value_t = typename type_def::value_t;
 		using in_t = typename type_def::in_t;
 		using return_t = typename type_def::return_t;
+		using completetype_return_t = typename type_def::completetype_return_t;
 		using ptr_t = std::shared_ptr<ValueProperty>;
 
-	/*override from Property*/
 	public:
-		Type type() const override final { return type_v; }
+		virtual return_t value() const = 0;
 
+	public:
+		virtual void reduce(ptr_t & ioSelf) {}
+
+	private:
+		/*override from Property*/
 		void reduce(PropertyPtr & ioSelf) override final
 		{
 			ptr_t ptr = Utils::sam_safe_shared_cast<ValueProperty>(ioSelf, __FILE__, __LINE__);
@@ -84,30 +75,48 @@ namespace Compiler
 			ioSelf = ptr;
 		}
 
-		virtual void reduce(ptr_t & ioSelf) {}
-
-	/*abstract*/
-	public:
-		virtual return_t value() const = 0;
+		CompleteType const &type() const override { return completetype_return_t::ret(value()); }
 	};
 
-	template<Property::Type typ, typename val, typename in, typename ret, typename value_return>
+	template<typename val, typename in, typename ret, typename completetype_return, typename value_return>
 	struct Typedef
 	{
-		static constexpr Property::Type type_v = typ;
 		using value_t = val;
 		using in_t = in;
 		using return_t = ret;
+		using completetype_return_t = completetype_return;
 		using value_return_t = value_return;
 		using ptr_t = std::shared_ptr<ValueProperty<Typedef>>;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	using BTypeDef = Typedef<Property::Type::kBool, bool, bool, bool, prvt::value_return<bool, bool>>;
-	using ITypeDef = Typedef<Property::Type::kInteger, int, int, int, prvt::value_return<int, int>>;
-	using RTypeDef = Typedef<Property::Type::kReal, double, double, double, prvt::value_return<double, double>>;
-	using WTypeDef = Typedef<Property::Type::kWord, std::string, std::string const &, std::string, prvt::value_return<std::string, std::string const &>>;
+	namespace prvt
+	{
+		template<typename in, typename out>
+		struct value_return
+		{
+			inline static out ret(in value)
+			{
+				return value;
+			}
+		};
+
+		template<PrimitiveType type, typename in>
+		struct value_completetype_return
+		{
+			inline static CompleteType &ret(in)
+			{
+				static CompleteType _sType{type};
+				return _sType;
+			}
+		};
+	}
+
+	using BTypeDef = Typedef<bool, bool, bool, prvt::value_completetype_return<PrimitiveType::kBool, bool>, prvt::value_return<bool, bool>>;
+	using ITypeDef = Typedef<int, int, int, prvt::value_completetype_return<PrimitiveType::kInteger, int>, prvt::value_return<int, int>>;
+	using RTypeDef = Typedef<double, double, double, prvt::value_completetype_return<PrimitiveType::kReal, double>, prvt::value_return<double, double>>;
+	using WTypeDef = Typedef<std::string, std::string const &, std::string, prvt::value_completetype_return<PrimitiveType::kWord, std::string const&>, prvt::value_return<std::string const&, std::string const &>>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -118,22 +127,15 @@ namespace Compiler
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	class Object
+	class Object final
 	{
 	public:
-		using Mapping = std::map<PropertyPtr, PropertyPtr>;
-
-	public:
 		explicit Object(Module const & module) : _module(module) {}
-
-		Mapping const & mapping() const { return _mapping; }
-		Mapping & mapping() { return _mapping; }
 
 		Module const & module() const { return _module; }
 
 	private:
 		Module const & _module;
-		Mapping _mapping;
 	};
 	using ObjectPtr = std::unique_ptr<Object>;
 
@@ -141,15 +143,35 @@ namespace Compiler
 	{
 		struct object_return
 		{
-			inline static Object & ret(ObjectPtr const & o)
+			inline static Object & ret(ObjectPtr const &o)
 			{
 				return *o;
 			}
 		};
+
+		struct object_completetype_return
+		{
+			static CompleteType const &ret(Object const &o);
+		};
 	}
 
-	using OTypeDef = Typedef<Property::Type::kObject, ObjectPtr, ObjectPtr, Object &, prvt::object_return>;
+	using OTypeDef = Typedef<ObjectPtr, ObjectPtr, Object &, prvt::object_completetype_return, prvt::object_return>;
 	using OProperty = ValueProperty<OTypeDef>;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	class LinearContainer : public Property
+	{
+	public:
+		LinearContainer(CompleteType const &completeType) : _completeType(completeType) {}
+
+		/*override from Property*/
+		bool constant() const override { return false; }
+		CompleteType const &type() const override { return _completeType; }
+
+	private:
+		CompleteType _completeType;
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

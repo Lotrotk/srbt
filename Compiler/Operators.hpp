@@ -441,10 +441,6 @@ namespace Operators
 		/*override from Property*/
 		public:
 			bool constant() const override { return _arg0->constant() && _arg1->constant(); }
-			bool dependend_on_property(Module const & module, std::string const & name) const override
-			{
-				return _arg0->dependend_on_property(module, name) || _arg1->dependend_on_property(module, name);
-			}
 
 		/*override from ValueProperty*/
 		public:
@@ -529,10 +525,6 @@ namespace Operators
 		/*override from Property*/
 		public:
 			bool constant() const override { return _arg0->constant() && _arg1->constant(); }
-			bool dependend_on_property(Module const & module, std::string const & name) const override
-			{
-				return _arg0->dependend_on_property(module, name) || _arg1->dependend_on_property(module, name);
-			}
 
 		/*override from ValueProperty*/
 		public:

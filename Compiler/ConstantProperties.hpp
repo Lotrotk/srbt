@@ -25,7 +25,6 @@ namespace Compiler
 	/*override from Property*/
 	public:
 		bool constant() const override { return true; }
-		bool dependend_on_property(Module const &, std::string const &) const override { return false; }
 
 	/*override from ValueProperty*/
 	public:
@@ -86,7 +85,6 @@ namespace Compiler
 	/*override from Property*/
 	public:
 		bool constant() const override { return true; }
-		bool dependend_on_property(Module const &, std::string const &) const override { return false; }
 
 	/*override from ValueProperty*/
 	public:
@@ -102,5 +100,34 @@ namespace Compiler
 	using RCProperty = ConstantCachedProperty<RTypeDef>;
 	using WCProperty = ConstantCachedProperty<WTypeDef>;
 	using OCProperty = ConstantProperty<OTypeDef>;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	namespace prvt
+	{
+		struct struct_completetype_return
+		{
+			static CompleteType &ret(Module const &);
+		};
+	}
+
+	using STypeDef = Typedef<Module const &, Module const &, Module const &, prvt::struct_completetype_return, prvt::value_return<Module const &, Module const &>>;
+	using StructProperty = ValueProperty<STypeDef>;
+	MAKE_SHARED_PTR(StructProperty);
+
+	namespace prvt
+	{
+		template<>
+		struct KeyForConstantCachedProperty<STypeDef>
+		{
+			using key_t = Module const *;
+			static inline key_t key(Module const & value)
+			{
+				return &value;
+			}
+		};
+	}
+
+	using StructCProperty = ConstantCachedProperty<STypeDef>;
 }
 }
