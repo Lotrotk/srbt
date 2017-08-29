@@ -1,0 +1,36 @@
+#pragma once
+
+#include <vector>
+
+#include <experimental/filesystem>
+
+namespace SRBT
+{
+namespace Parse
+{
+	using path_t = std::experimental::filesystem::path;
+
+	class File
+	{
+	public:
+		virtual ~File() = default;
+
+		virtual char const *data() const = 0;
+		virtual size_t length() const = 0;
+	};
+
+	class TextFile final : public File
+	{
+	public:
+		bool open(path_t const &);
+		path_t const &path() const { return _path; }
+
+		char const *data() const override { return _buffer.data(); }
+		size_t length() const override { return _buffer.size(); }
+
+	private:
+		path_t _path;
+		std::vector<char> _buffer;
+	};
+}
+}

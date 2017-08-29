@@ -1,5 +1,6 @@
 SET(HEADERS
 	Debug.hpp
+	Enumerator.hpp
 	Exception.hpp
     Macros.hpp
 	Named.hpp
