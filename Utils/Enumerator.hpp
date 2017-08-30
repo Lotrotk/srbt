@@ -42,4 +42,38 @@ namespace Utils
 		bool next() override { return true; }
 		void reset() override {}
 	};
+
+	template<typename out, typename iterator>
+	class RangeEnumerator : public Enumerator<out>
+	{
+	public:
+		RangeEnumerator() = default;
+		RangeEnumerator(iterator const begin, iterator const end) : _begin(begin), _end(end), _current(begin) {}
+
+		out current() const override { return *_current; }
+		bool next() override
+		{
+			if(_current == _end)
+			{
+				return false;
+			}
+			if(_init)
+			{
+				_init = false;
+			}
+			else
+			{
+				++_current;
+			}
+
+			return true;
+		}
+		void reset() override { _current = _begin; _init = true; }
+
+	private:
+		iterator _begin{};
+		iterator _end{};
+		iterator _current{};
+		bool _init{true};
+	};
 }

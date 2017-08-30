@@ -25,5 +25,3 @@ set(SOURCES
 )
 
 add_library(compiler ${SOURCES} ${HEADERS})
-add_executable(compiler_test main.cpp)
-target_link_libraries(compiler_test compiler)

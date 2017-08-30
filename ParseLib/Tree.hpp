@@ -14,6 +14,7 @@ namespace Parse
 	class TokenNode;
 	class SequenceNode;
 	class KeyNode;
+	class StringNode;
 
 	class TreeNode
 	{
@@ -21,6 +22,7 @@ namespace Parse
 		virtual ~TreeNode() = default;
 
 		virtual TokenNode * tryAsToken() { return nullptr; }
+		virtual StringNode * tryAsString() { return nullptr; }
 		virtual SequenceNode * tryAsSequence() { return nullptr; }
 		virtual KeyNode * tryAsKeyNode() { return nullptr; }
 	};
@@ -38,6 +40,21 @@ namespace Parse
 
 	private:
 		std::string _token;
+		int _line;
+	};
+
+	class StringNode final : public TreeNode
+	{
+	public:
+		StringNode(std::string &&value, int const line) : _value(std::move(value)), _line(line) {}
+
+		std::string const &value() const { return _value; }
+		int line() const { return _line; }
+
+		StringNode * tryAsString() override { return this; }
+
+	private:
+		std::string _value;
 		int _line;
 	};
 
@@ -73,12 +90,16 @@ namespace Parse
 
 	using key_t = std::pair<std::string, int>;
 
+	struct exception_unterminated_string{ int _line; };
+	struct exception_string_terminated_by_backslash{ int _line; };
+	struct exception_special_character_not_supported{ int _line; char _character; };
 	/**
-	 * @param line : at which the file begins
+	 * @brief parses file into sequence. Strings are defined by "...", special characters supported : '\\', '\n', '\"'
 	 * @param operators : operators are split even if no delimiters between (e.g. 4+5 -> '4','+','5')
 	 * @param keywords : special tokens
-	 * @return a sequence of tokennodes and keynodes
+	 * @return a sequence of tokennodes, stringnodes and keynodes
+	 * @throws exception_unterminated_string, exception_string_terminated_by_backslash, exception_special_character_not_supported
 	 */
-	std::unique_ptr<SequenceNode> parse(File const&, int line, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords);
+	std::unique_ptr<SequenceNode> parse(File const&, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords);
 }
 }

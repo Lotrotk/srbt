@@ -17,16 +17,21 @@ namespace Parse
 
 		virtual char const *data() const = 0;
 		virtual size_t length() const = 0;
+
+		virtual path_t const& path() const = 0;
+		virtual size_t start() const = 0;
 	};
 
 	class TextFile final : public File
 	{
 	public:
 		bool open(path_t const &);
-		path_t const &path() const { return _path; }
 
 		char const *data() const override { return _buffer.data(); }
 		size_t length() const override { return _buffer.size(); }
+
+		path_t const& path() const override { return _path; }
+		size_t start() const override { return 1; }
 
 	private:
 		path_t _path;

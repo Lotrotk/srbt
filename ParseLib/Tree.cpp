@@ -16,13 +16,15 @@ namespace
 		kEOF,
 		kToken,
 		kNewLine,
+		kString,
 	};
 
-	return_code next(char const * &ioData, char const *const end, size_t &outLength, int &outLinesSkipped, Utils::Enumerator<key_t const&> &operators)
+	return_code next(char const * &ioData, char const *const end, size_t &outLength, int &outLinesSkipped, int &outLinesSkippedInString, Utils::Enumerator<key_t const&> &operators)
 	{
 		return_code res = return_code::kEOF;
 		outLength = 0;
 		outLinesSkipped = 0;
+		outLinesSkippedInString = 0;
 
 		if(ioData == end)
 		{
@@ -60,6 +62,42 @@ namespace
 			else
 			{
 				res = return_code::kToken;
+			}
+		}
+		else if(ioData[0] == '"')
+		{
+			char const *data = ioData;
+			++ioData;
+			while(true)
+			{
+				++data;
+				if(data == end)
+				{
+					throw exception_unterminated_string();
+				}
+				else if(data[0] == '\n')
+				{
+					++outLinesSkippedInString;
+				}
+				else if(data[0] == '\\')
+				{
+					++data;
+					if(data == end)
+					{
+						throw exception_unterminated_string();
+					}
+					if(!(data[0] == '\\' || data[0] == 'n' || data[0] == '"'))
+					{
+						exception_special_character_not_supported e;
+						e._character = data[0];
+						throw e;
+					}
+				}
+				else if(data[0] == '"')
+				{
+					outLength = std::distance(ioData, data);
+					return return_code::kString;
+				}
 			}
 		}
 		else
@@ -117,7 +155,7 @@ namespace
 	}
 }
 
-std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
+std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
 {
 	// check if operators from smallest to largest length
 	{
@@ -153,11 +191,29 @@ std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, Uti
 	res.reset(new SequenceNode);
 	SequenceNode::list_t &list = res->list();
 
+	int line = file.start();
+
 	while(true)
 	{
 		size_t length;
 		int linesSkipped;
-		return_code const code = next(data, end, length, linesSkipped, operators);
+		int linesSkippedInString;
+		return_code code;
+		try
+		{
+			code = next(data, end, length, linesSkipped, linesSkippedInString, operators);
+		}
+		catch(exception_unterminated_string &e)
+		{
+			e._line = line + linesSkipped;
+			throw;
+		}
+		catch(exception_special_character_not_supported &e)
+		{
+			e._line = line + linesSkipped + linesSkippedInString;
+			throw;
+		}
+
 		line += linesSkipped;
 		switch (code)
 		{
@@ -188,6 +244,29 @@ std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, Uti
 		case return_code::kNewLine:
 			list.emplace_back(new TokenNode("\n", line));
 			break;
+		case return_code::kString:
+		{
+			std::string s(data, length);
+			for(std::string::iterator it = s.begin(); it != s.end(); ++it)
+			{
+				if(*it == '\\')
+				{
+					it = s.erase(it);
+					if(it == s.end())
+					{
+						throw exception_string_terminated_by_backslash{line};
+					}
+					if(*it == 'n')
+					{
+						*it = '\n';
+					}
+				}
+			}
+			list.emplace_back(new StringNode(std::move(s), line));
+			++data;
+			line += linesSkippedInString;
+			break;
+		}
 		default:
 			return res;
 		}
