@@ -9,7 +9,7 @@ using namespace SRBT::Parse;
 
 namespace
 {
-	using operators_t = Utils::Enumerator<std::string const&>;
+	using Parse::key_t;
 
 	enum struct return_code
 	{
@@ -18,7 +18,7 @@ namespace
 		kNewLine,
 	};
 
-	return_code next(char const * &ioData, char const *const end, size_t &outLength, int &outLinesSkipped, operators_t &operators)
+	return_code next(char const * &ioData, char const *const end, size_t &outLength, int &outLinesSkipped, Utils::Enumerator<key_t const&> &operators)
 	{
 		return_code res = return_code::kEOF;
 		outLength = 0;
@@ -97,12 +97,12 @@ namespace
 			std::string const s = std::string(ioData, outLength);
 			while(operators.next())
 			{
-				size_t const b = s.find(operators.current());
+				size_t const b = s.find(operators.current().first);
 				if(b != std::string::npos)
 				{
 					if(b == 0)
 					{
-						outLength = operators.current().size();
+						outLength = operators.current().first.size();
 					}
 					else
 					{
@@ -117,20 +117,20 @@ namespace
 	}
 }
 
-std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, operators_t &operators)
+std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
 {
 	// check if operators from smallest to largest length
 	{
 		operators.reset();
 		if(operators.next()) {
-			size_t l = operators.current().length();
+			size_t l = operators.current().first.length();
 			if(l == 0)
 			{
 				throw Utils::TechnicalException("parse : operators must have length");
 			}
 			while(operators.next())
 			{
-				size_t ll = operators.current().length();
+				size_t ll = operators.current().first.length();
 				if(ll < l)
 				{
 					throw Utils::TechnicalException("parse : operators must be sorted from smallest to largest");
@@ -164,6 +164,24 @@ std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, ope
 		case return_code::kToken:
 		{
 			std::string token = std::string(data, length);
+			operators.reset();
+			while(operators.next())
+			{
+				if(operators.current().first == token)
+				{
+					list.emplace_back(new KeyNode(operators.current().second, line));
+					break;
+				}
+			}
+			keywords.reset();
+			while(keywords.next())
+			{
+				if(keywords.current().first == token)
+				{
+					list.emplace_back(new KeyNode(keywords.current().second, line));
+					break;
+				}
+			}
 			list.emplace_back(new TokenNode(std::move(token), line));
 			break;
 		}

@@ -13,28 +13,27 @@ namespace Parse
 {
 	class TokenNode;
 	class SequenceNode;
+	class KeyNode;
 
 	class TreeNode
 	{
 	public:
 		virtual ~TreeNode() = default;
 
-		virtual TokenNode const * tryAsToken() const { return nullptr; }
 		virtual TokenNode * tryAsToken() { return nullptr; }
-		virtual SequenceNode const * tryAsSequence() const { return nullptr; }
 		virtual SequenceNode * tryAsSequence() { return nullptr; }
+		virtual KeyNode * tryAsKeyNode() { return nullptr; }
 	};
 	MAKE_SHARED_PTR(TreeNode);
 
 	class TokenNode final : public TreeNode
 	{
 	public:
-		TokenNode(std::string &&token, const int line) : _token(std::move(token)), _line(line) {}
+		TokenNode(std::string &&token, int const line) : _token(std::move(token)), _line(line) {}
 
 		std::string const &token() const { return _token; }
 		int line() const { return _line; }
 
-		TokenNode const * tryAsToken() const override { return this; }
 		TokenNode * tryAsToken() override { return this; }
 
 	private:
@@ -51,13 +50,35 @@ namespace Parse
 		list_t &list() { return _list; }
 		list_t const &list() const { return _list; }
 
-		SequenceNode const * tryAsSequence() const override { return this; }
 		SequenceNode * tryAsSequence() override { return this; }
 
 	private:
 		list_t _list;
 	};
 
-	std::unique_ptr<SequenceNode> parse(File const&, int line, Utils::Enumerator<std::string const&> &operators);
+	class KeyNode final : public TreeNode
+	{
+	public:
+		KeyNode(int const key, int const line) : _key(key), _line(line) {}
+
+		int key() const { return _key; }
+		int line() const { return _line; }
+
+		KeyNode * tryAsKeyNode() override { return this; }
+
+	private:
+		int _key;
+		int _line;
+	};
+
+	using key_t = std::pair<std::string, int>;
+
+	/**
+	 * @param line : at which the file begins
+	 * @param operators : operators are split even if no delimiters between (e.g. 4+5 -> '4','+','5')
+	 * @param keywords : special tokens
+	 * @return a sequence of tokennodes and keynodes
+	 */
+	std::unique_ptr<SequenceNode> parse(File const&, int line, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords);
 }
 }
