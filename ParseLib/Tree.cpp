@@ -18,10 +18,11 @@ namespace
 		kNewLine,
 	};
 
-	return_code next(char const * &ioData, char const *const end, size_t &outLength, operators_t &operators)
+	return_code next(char const * &ioData, char const *const end, size_t &outLength, int &outLinesSkipped, operators_t &operators)
 	{
 		return_code res = return_code::kEOF;
 		outLength = 0;
+		outLinesSkipped = 0;
 
 		if(ioData == end)
 		{
@@ -50,6 +51,7 @@ namespace
 			while((ioData[0] == ' ' || ioData[0] == '\t' || ioData[0] == '\n') && ioData != end)
 			{
 				++ioData;
+				outLinesSkipped += ioData[0] == '\n';
 			}
 
 			if(ioData == end)
@@ -65,6 +67,7 @@ namespace
 			while(!(ioData[0] == ' ' || ioData[0] == '\t' || ioData[0] == '\n') && ioData != end)
 			{
 				++ioData;
+				outLinesSkipped += ioData[0] == '\n';
 			}
 
 			if(ioData == end)
@@ -114,17 +117,7 @@ namespace
 	}
 }
 
-class TreeCache::RealTreeCache final : public TreeCache
-{
-public:
-	using cache_t = std::map<std::string, TreeNodePtr>;
-
-public:
-	cache_t _cache{};
-	TreeNodePtr const _newline{new TokenNode("\n")};
-};
-
-std::pair<std::unique_ptr<SequenceNode>, std::unique_ptr<TreeCache>>SRBT::Parse::parse(File const &file, operators_t &operators, std::unique_ptr<TreeCache> inCache)
+std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, operators_t &operators)
 {
 	std::unique_ptr<SequenceNode> res;
 
@@ -132,41 +125,32 @@ std::pair<std::unique_ptr<SequenceNode>, std::unique_ptr<TreeCache>>SRBT::Parse:
 	size_t const fileLength = file.length();
 	if(!data || fileLength == 0)
 	{
-		return std::make_pair(std::move(res), std::move(inCache));
+		return res;
 	}
 	const char *const end = data + fileLength;
 
 	res.reset(new SequenceNode);
 	SequenceNode::list_t &list = res->list();
 
-	if(!inCache)
-	{
-		inCache.reset(new TreeCache::RealTreeCache);
-	}
-	TreeCache::RealTreeCache &cache = static_cast<TreeCache::RealTreeCache&>(*inCache);
-
 	while(true)
 	{
 		size_t length;
-		return_code const code = next(data, end, length, operators);
+		int linesSkipped;
+		return_code const code = next(data, end, length, linesSkipped, operators);
+		line += linesSkipped;
 		switch (code)
 		{
 		case return_code::kToken:
 		{
 			std::string token = std::string(data, length);
-			TreeNodePtr &c = cache._cache[token];
-			if(!c)
-			{
-				c.reset(new TokenNode(std::move(token)));
-			}
-			list.push_back(c);
+			list.emplace_back(new TokenNode(std::move(token), line));
 			break;
 		}
 		case return_code::kNewLine:
-			list.push_back(cache._newline);
+			list.emplace_back(new TokenNode("\n", line));
 			break;
 		default:
-			return std::make_pair(std::move(res), std::move(inCache));
+			return res;
 		}
 
 		data += length;

@@ -29,15 +29,17 @@ namespace Parse
 	class TokenNode final : public TreeNode
 	{
 	public:
-		TokenNode(std::string &&token) : _token(std::move(token)) {}
+		TokenNode(std::string &&token, const int line) : _token(std::move(token)), _line(line) {}
 
 		std::string const &token() const { return _token; }
+		int line() const { return _line; }
 
 		TokenNode const * tryAsToken() const override { return this; }
 		TokenNode * tryAsToken() override { return this; }
 
 	private:
 		std::string _token;
+		int _line;
 	};
 
 	class SequenceNode final : public TreeNode
@@ -56,30 +58,6 @@ namespace Parse
 		list_t _list;
 	};
 
-	class TreeCache
-	{
-	public:
-		class RealTreeCache;
-
-	public:
-		virtual ~TreeCache() = default;
-	private:
-		TreeCache() = default;
-	private:
-		friend class RealTreeCache;
-	};
-
-	/**
-	 * @brief parses the file
-	 * @param operators : are recognized within tokens and treaded as a separate token (e.g. 4+4 -> '4', '+', '4')
-	 * @param cache : is also returned, contains caching for tokens. Useful if multiple files with the same format are parsed, minimizes quantity of memory that is dynamically allocated to build the trees.
-	 * @return both the sequence (if there was input) and the cache that can be used in a second call
-	 */
-	std::pair<std::unique_ptr<SequenceNode>, std::unique_ptr<TreeCache>> parse
-	(
-		File const&,
-		Utils::Enumerator<std::string const&> &operators,
-		std::unique_ptr<TreeCache> cache = std::unique_ptr<TreeCache>()
-	);
+	std::unique_ptr<SequenceNode> parse(File const&, int line, Utils::Enumerator<std::string const&> &operators);
 }
 }
