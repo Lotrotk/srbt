@@ -119,6 +119,27 @@ namespace
 
 std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, int line, operators_t &operators)
 {
+	// check if operators from smallest to largest length
+	{
+		operators.reset();
+		if(operators.next()) {
+			size_t l = operators.current().length();
+			if(l == 0)
+			{
+				throw Utils::TechnicalException("parse : operators must have length");
+			}
+			while(operators.next())
+			{
+				size_t ll = operators.current().length();
+				if(ll < l)
+				{
+					throw Utils::TechnicalException("parse : operators must be sorted from smallest to largest");
+				}
+				l = ll;
+			}
+		}
+	}
+
 	std::unique_ptr<SequenceNode> res;
 
 	const char *data = file.data();
