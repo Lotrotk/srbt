@@ -3,13 +3,13 @@
 #include "Utils/Exception.hpp"
 
 using namespace SRBT;
-using namespace SRBT::Parse;
+using namespace SRBT::Tokenize;
 
 #include <map>
 
 namespace
 {
-	using Parse::key_t;
+	using Tokenize::key_t;
 
 	enum struct return_code
 	{
@@ -155,7 +155,7 @@ namespace
 	}
 }
 
-std::unique_ptr<SequenceNode> SRBT::Parse::parse(File const &file, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
+std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
 {
 	// check if operators from smallest to largest length
 	{

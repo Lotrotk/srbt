@@ -6,7 +6,7 @@
 
 namespace SRBT
 {
-namespace Parse
+namespace Tokenize
 {
 	using path_t = std::experimental::filesystem::path;
 

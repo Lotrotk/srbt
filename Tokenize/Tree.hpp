@@ -9,7 +9,7 @@
 
 namespace SRBT
 {
-namespace Parse
+namespace Tokenize
 {
 	class TokenNode;
 	class SequenceNode;

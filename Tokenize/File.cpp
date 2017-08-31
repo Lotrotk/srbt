@@ -3,7 +3,7 @@
 #include <fstream>
 
 using namespace SRBT;
-using namespace SRBT::Parse;
+using namespace SRBT::Tokenize;
 
 bool TextFile::open(path_t const &path)
 {

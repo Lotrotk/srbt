@@ -8,4 +8,4 @@ set(SOURCES
 	Tree.cpp
 )
 
-add_library(parselib ${SOURCES} ${HEADERS})
+add_library(tokenize ${SOURCES} ${HEADERS})

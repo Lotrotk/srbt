@@ -2,7 +2,7 @@
 
 namespace SRBT
 {
-namespace Parser
+namespace Interpret
 {
 	enum Operators
 	{
