@@ -188,7 +188,7 @@ std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enu
 	}
 	const char *const end = data + fileLength;
 
-	res.reset(new SequenceNode);
+	res.reset(new SequenceNode(file.start()));
 	SequenceNode::list_t &list = res->list();
 
 	int line = file.start();

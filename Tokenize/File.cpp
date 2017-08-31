@@ -10,7 +10,7 @@ bool TextFile::open(path_t const &path)
 	_buffer.clear();
 
 	std::fstream ifs;
-	ifs.open(path.string(), std::ios_base::in | std::ios_base::binary);
+	ifs.open(path.u8string(), std::ios_base::in | std::ios_base::binary);
 	if(!ifs.is_open())
 	{
 		return false;

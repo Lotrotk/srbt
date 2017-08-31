@@ -3,6 +3,8 @@
 using namespace SRBT;
 using namespace Compiler;
 
+using namespace std::experimental;
+
 bool FileOrigin::operator==(Origin const & origin) const
 {
 	if(FileOrigin const * const fileOrigin = dynamic_cast<FileOrigin const *>(&origin))
@@ -23,6 +25,28 @@ bool FileOrigin::operator==(FileOrigin const & origin) const
 	{
 		throw Utils::TechnicalException(exc.what());
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool StructOrigin::operator==(StructOrigin const &o) const
+{
+	return _line == o._line && *_fileOrigin == *o._fileOrigin;
+}
+
+bool StructOrigin::operator==(Origin const &o) const
+{
+	if(StructOrigin const *const structOrigin = dynamic_cast<StructOrigin const*>(&o))
+	{
+		return *structOrigin == *this;
+	}
+
+	return false;
+}
+
+std::string StructOrigin::toString() const
+{
+	return _fileOrigin->path().u8string() + ':' + std::to_string(_line);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

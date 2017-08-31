@@ -2,8 +2,11 @@
 
 #include "Exception.hpp"
 #include "Keys.hpp"
+#include "Statement.hpp"
 
 #include "Tokenize/Tree.hpp"
+
+#include "Utils/Exception.hpp"
 
 using namespace SRBT;
 using namespace SRBT::Interpret;
@@ -48,6 +51,7 @@ namespace
 			_operators.push_back(Tokenize::key_t{"!=", Operators::kCompareDiffers});
 			_operators.push_back(Tokenize::key_t{"<=", Operators::kLessOrEqual});
 			_operators.push_back(Tokenize::key_t{">=", Operators::kMoreOrEqual});
+			_operators.push_back(Tokenize::key_t{">=", Operators::kHashHashtag});
 
 			sEnumerator_for_operators = Utils::RangeEnumerator<Tokenize::key_t const&, std::vector<Tokenize::key_t>::const_iterator>(_operators.cbegin(), _operators.cend());
 
@@ -65,6 +69,8 @@ namespace
 		std::vector<Tokenize::key_t> _keywords;
 	};
 	const InitEnumberators initEnumerators;
+
+	void interPretStatements(Compiler::Module &module, Tokenize::SequenceNode &sequence);
 }
 
 Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
@@ -89,5 +95,46 @@ Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 		throw ParseException(file.path(), file.start() + e._line, std::string() + "special character \\" + e._character + "not supported");
 	}
 
+	Compiler::OriginPtr origin;
+	if(Tokenize::TextFile const *const textFile = dynamic_cast<Tokenize::TextFile const*>(&file))
+	{
+		origin.reset(new Compiler::FileOrigin(textFile->path()));
+	}
+	else
+	{
+		throw Utils::TechnicalException("only textfile origins defined");
+	}
+
+	res.reset(new Compiler::Module(origin));
+
+	interPretStatements(*res, *sequence);
+
 	return res;
+}
+
+namespace
+{
+	void interPretStatements(Compiler::Module &module, Tokenize::SequenceNode &sequence)
+	{
+		for(Tokenize::iterator_t it = sequence.list().begin(); it != sequence.list().end();)
+		{
+			Tokenize::TreeNode &head = **it;
+			if(Tokenize::KeyNode const *const key = head.tryAsKeyNode())
+			{
+				switch(key->key())
+				{
+				case kHashtag:
+					++it;
+					if(it == sequence.list().end())
+					{
+						throw ParseException(module.origin().fileOrigin().path(), key->line(), "incomplete statement");
+					}
+					interpretMember(module, sequence, it);
+					break;
+				default:
+					throw ParseException(module.origin().fileOrigin().path(), key->line(), "keyword invalid here");
+				}
+			}
+		}
+	}
 }

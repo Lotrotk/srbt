@@ -9,17 +9,20 @@
 
 #include <experimental/filesystem>
 
-using namespace std::experimental;
-
 namespace SRBT
 {
 namespace Compiler
 {
 	class Origin;
 	class FileOrigin;
-	using OriginUPtr = std::unique_ptr<Origin>;
+	class StructOrigin;
+	MAKE_SHARED_PTR(Origin);
+	MAKE_SHARED_PTR(FileOrigin);
+	MAKE_SHARED_PTR(StructOrigin);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	using path_t = std::experimental::filesystem::path;
 
 	class Origin
 	{
@@ -29,28 +32,42 @@ namespace Compiler
 		/*abstract*/
 		virtual bool operator==(Origin const &) const = 0;
 		virtual std::string toString() const = 0;
-
 		virtual FileOrigin const & fileOrigin() const = 0;
-		virtual OriginUPtr clone() const = 0;
 	};
 
-	class FileOrigin : public Origin
+	class FileOrigin final : public Origin
 	{
 	public:
-		explicit FileOrigin(filesystem::path const & inPath) : _path(inPath) {}
+		explicit FileOrigin(path_t const & inPath) : _path(inPath) {}
 		~FileOrigin() override = default;
 
 		bool operator==(FileOrigin const &) const;
 
-		filesystem::path const & path() const { return _path; }
+		path_t const & path() const { return _path; }
 
 		/* override from Origin */
 		bool operator==(Origin const &) const override;
 		std::string toString() const override { return _path.u8string(); }
 		FileOrigin const & fileOrigin() const override { return *this; }
-		OriginUPtr clone() const override { return OriginUPtr(new FileOrigin(*this)); }
+
 	private:
-		filesystem::path _path;
+		path_t _path;
+	};
+
+	class StructOrigin final : public Origin
+	{
+	public:
+		StructOrigin(FileOriginPtr const &fileOrigin, const int line) : _fileOrigin(fileOrigin), _line(line) {}
+
+		bool operator==(StructOrigin const &) const;
+
+		bool operator==(Origin const &) const override;
+		std::string toString() const override;
+		FileOrigin const & fileOrigin() const override { return *_fileOrigin; }
+
+	private:
+		FileOriginPtr _fileOrigin;
+		int _line;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +100,7 @@ namespace Compiler
 		using id_t = unsigned int;
 
 	public:
-		explicit Module(OriginUPtr inOrigin) : _origin(std::move(inOrigin)), _moduleId(++_sModuleID), _object_type{id_t(_moduleId)}, _struct_type{PrimitiveType::kStruct, _object_type.front()} {}
+		explicit Module(OriginPtr inOrigin) : _origin(std::move(inOrigin)), _moduleId(++_sModuleID), _object_type{id_t(_moduleId)}, _struct_type{PrimitiveType::kStruct, _object_type.front()} {}
 
 		Origin const & origin() const { return *_origin; }
 
@@ -92,7 +109,7 @@ namespace Compiler
 		CompleteType &structType() const { return _struct_type; }
 
 	private:
-		OriginUPtr _origin;
+		OriginPtr _origin;
 		Properties _properties;
 		id_t _moduleId;
 		CompleteType _object_type;

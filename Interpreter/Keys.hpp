@@ -37,6 +37,7 @@ namespace Interpret
 		kCompareDiffers,// !=
 		kLessOrEqual,// <=
 		kMoreOrEqual,// >=
+		kHashHashtag,// ##
 	};
 
 	enum Keywords

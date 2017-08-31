@@ -21,41 +21,45 @@ namespace Tokenize
 	public:
 		virtual ~TreeNode() = default;
 
+		int line() const { return _line; }
+
 		virtual TokenNode * tryAsToken() { return nullptr; }
 		virtual StringNode * tryAsString() { return nullptr; }
 		virtual SequenceNode * tryAsSequence() { return nullptr; }
 		virtual KeyNode * tryAsKeyNode() { return nullptr; }
+
+	protected:
+		TreeNode(int const line) : _line(line) {}
+
+	private:
+		int _line;
 	};
 	MAKE_SHARED_PTR(TreeNode);
 
 	class TokenNode final : public TreeNode
 	{
 	public:
-		TokenNode(std::string &&token, int const line) : _token(std::move(token)), _line(line) {}
+		TokenNode(std::string &&token, int const line) : TreeNode(line), _token(std::move(token)) {}
 
 		std::string const &token() const { return _token; }
-		int line() const { return _line; }
 
 		TokenNode * tryAsToken() override { return this; }
 
 	private:
 		std::string _token;
-		int _line;
 	};
 
 	class StringNode final : public TreeNode
 	{
 	public:
-		StringNode(std::string &&value, int const line) : _value(std::move(value)), _line(line) {}
+		StringNode(std::string &&value, int const line) : TreeNode(line), _value(std::move(value)) {}
 
 		std::string const &value() const { return _value; }
-		int line() const { return _line; }
 
 		StringNode * tryAsString() override { return this; }
 
 	private:
 		std::string _value;
-		int _line;
 	};
 
 	class SequenceNode final : public TreeNode
@@ -64,6 +68,8 @@ namespace Tokenize
 		using list_t = std::list<TreeNodePtr>;
 
 	public:
+		SequenceNode(int const line) : TreeNode(line) {}
+
 		list_t &list() { return _list; }
 		list_t const &list() const { return _list; }
 
@@ -73,19 +79,19 @@ namespace Tokenize
 		list_t _list;
 	};
 
+	using iterator_t = SequenceNode::list_t::iterator;
+
 	class KeyNode final : public TreeNode
 	{
 	public:
-		KeyNode(int const key, int const line) : _key(key), _line(line) {}
+		KeyNode(int const key, int const line) : TreeNode(line), _key(key) {}
 
 		int key() const { return _key; }
-		int line() const { return _line; }
 
 		KeyNode * tryAsKeyNode() override { return this; }
 
 	private:
 		int _key;
-		int _line;
 	};
 
 	using key_t = std::pair<std::string, int>;
