@@ -3,9 +3,8 @@
 #include "Utils/Macros.hpp"
 #include "Utils/Sharedpointer.hpp"
 
-#include <map>
+#include <list>
 #include <string>
-#include <vector>
 
 namespace SRBT
 {
@@ -13,6 +12,7 @@ namespace Compiler
 {
 	class Module;
 	class Property;
+	MAKE_SHARED_PTR(Module);
 	MAKE_SHARED_PTR(Property);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,14 +22,15 @@ namespace Compiler
 		kBool,
 		kInteger,
 		kReal,
-		kWord,
+		kString,
 		kObject,
-		kStruct,
+		kType,
 		kLinearContainer,
+		kNo_custom_type,
 		kCustom = 100,
 	};
 
-	using CompleteType = std::vector<PrimitiveType> const;
+	using CompleteType = std::list<PrimitiveType>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,147 +39,141 @@ namespace Compiler
 	public:
 		virtual ~Property() = default;
 
-		/**
-		 * @brief argument is allways shared pointer to this,
-		 * may be set to a new Property
-		 */
-		virtual void reduce(PropertyPtr & ioSelf) {}
+		bool isType(PrimitiveType const p) const { return isType(CompleteType{p}); }
 
-		virtual bool constant() const = 0;
-		virtual CompleteType const &type() const = 0;
+		/*abrstract*/
+		virtual CompleteType getType() const = 0;
+		virtual bool isType(CompleteType const &) const = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	template<typename type_def>
-	class ValueProperty : public Property
-	{	
-	public:
-		using value_t = typename type_def::value_t;
-		using in_t = typename type_def::in_t;
-		using return_t = typename type_def::return_t;
-		using completetype_return_t = typename type_def::completetype_return_t;
-		using ptr_t = std::shared_ptr<ValueProperty>;
+	using int_t = int;
+	using real_t = double;
 
+	template<typename T, typename constant_type, PrimitiveType P>
+	class BasicProperty : public Property
+	{
 	public:
-		virtual return_t value() const = 0;
-
-	public:
-		virtual void reduce(ptr_t & ioSelf) {}
-
-	private:
 		/*override from Property*/
-		void reduce(PropertyPtr & ioSelf) override final
-		{
-			ptr_t ptr = Utils::sam_safe_shared_cast<ValueProperty>(ioSelf, __FILE__, __LINE__);
-			reduce(ptr);
-			ioSelf = ptr;
-		}
+		CompleteType getType() const override { return type(); }
+		bool isType(CompleteType const &t) const override { return t.size() == 1 && t.front() == P; }
 
-		CompleteType const &type() const override { return completetype_return_t::ret(value()); }
+		static CompleteType const &type() { static CompleteType const t{P}; return t; }
+
+		/*abstract*/
+		virtual constant_type *tryAsConstant() { return nullptr; }
+
+	protected:
+		BasicProperty() = default;
 	};
 
-	template<typename val, typename in, typename ret, typename completetype_return, typename value_return>
-	struct Typedef
-	{
-		using value_t = val;
-		using in_t = in;
-		using return_t = ret;
-		using completetype_return_t = completetype_return;
-		using value_return_t = value_return;
-		using ptr_t = std::shared_ptr<ValueProperty<Typedef>>;
-	};
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	namespace prvt
-	{
-		template<typename in, typename out>
-		struct value_return
-		{
-			inline static out ret(in value)
-			{
-				return value;
-			}
-		};
-
-		template<PrimitiveType type, typename in>
-		struct value_completetype_return
-		{
-			inline static CompleteType &ret(in)
-			{
-				static CompleteType _sType{type};
-				return _sType;
-			}
-		};
-	}
-
-	using BTypeDef = Typedef<bool, bool, bool, prvt::value_completetype_return<PrimitiveType::kBool, bool>, prvt::value_return<bool, bool>>;
-	using ITypeDef = Typedef<int, int, int, prvt::value_completetype_return<PrimitiveType::kInteger, int>, prvt::value_return<int, int>>;
-	using RTypeDef = Typedef<double, double, double, prvt::value_completetype_return<PrimitiveType::kReal, double>, prvt::value_return<double, double>>;
-	using WTypeDef = Typedef<std::string, std::string const &, std::string, prvt::value_completetype_return<PrimitiveType::kWord, std::string const&>, prvt::value_return<std::string const&, std::string const &>>;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	using BProperty = ValueProperty<BTypeDef>;
-	using IProperty = ValueProperty<ITypeDef>;
-	using RProperty = ValueProperty<RTypeDef>;
-	using WProperty = ValueProperty<WTypeDef>;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	class Object final
-	{
-	public:
-		explicit Object(Module const & module) : _module(module) {}
-
-		Module const & module() const { return _module; }
-
-	private:
-		Module const & _module;
-	};
-	using ObjectPtr = std::unique_ptr<Object>;
-
-	namespace prvt
-	{
-		struct object_return
-		{
-			inline static Object & ret(ObjectPtr const &o)
-			{
-				return *o;
-			}
-		};
-
-		struct object_completetype_return
-		{
-			static CompleteType const &ret(Object const &o);
-		};
-	}
-
-	using OTypeDef = Typedef<ObjectPtr, ObjectPtr, Object &, prvt::object_completetype_return, prvt::object_return>;
-	using OProperty = ValueProperty<OTypeDef>;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	class LinearContainer : public Property
-	{
-	public:
-		LinearContainer(CompleteType const &completeType) : _completeType(completeType) {}
-
-		/*override from Property*/
-		bool constant() const override { return false; }
-		CompleteType const &type() const override { return _completeType; }
-
-	private:
-		CompleteType _completeType;
-	};
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	class BCProperty;
+	using BProperty = BasicProperty<bool, BCProperty, PrimitiveType::kBool>;
 	MAKE_SHARED_PTR(BProperty);
+	class ICProperty;
+	using IProperty = BasicProperty<int_t, ICProperty, PrimitiveType::kInteger>;
 	MAKE_SHARED_PTR(IProperty);
+	class RCProperty;
+	using RProperty = BasicProperty<real_t, RCProperty, PrimitiveType::kReal>;
 	MAKE_SHARED_PTR(RProperty);
-	MAKE_SHARED_PTR(WProperty);
-	MAKE_SHARED_PTR(OProperty);
+	class SCProperty;
+	using SProperty = BasicProperty<std::string, SCProperty, PrimitiveType::kString>;
+	MAKE_SHARED_PTR(SProperty);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	class ObjectProperty : public Property
+	{
+	public:
+		ObjectProperty(Module &module) : _module(module) {}
+
+		/*override from Property*/
+		CompleteType getType() const override;
+		bool isType(CompleteType const &t) const override;
+
+	private:
+		Module &_module;
+	};
+	MAKE_SHARED_PTR(ObjectProperty);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	class TypeProperty : public Property
+	{
+	public:
+		TypeProperty(CompleteType const &t) : _myType(t) {}
+
+		/*override from Property*/
+		CompleteType getType() const override;
+		bool isType(CompleteType const &t) const override;
+
+	private:
+		CompleteType _myType;
+	};
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	template<typename parent, typename v, typename in, typename out>
+	class BasicConstantProperty : public parent
+	{
+	public:
+		BasicConstantProperty(v value) : _value(std::move(value)) {}
+
+		out value() const { return _value; }
+
+	private:
+		v const _value;
+	};
+
+	class BCProperty final : public BasicConstantProperty<BProperty, bool, bool, bool>
+	{
+	public:
+		using BasicConstantProperty<BProperty, bool, bool, bool>::BasicConstantProperty;
+
+		/*override from BasicProperty*/
+		BCProperty *tryAsConstant() override { return this; }
+	};
+	class ICProperty final : public BasicConstantProperty<IProperty, int_t, int_t, int_t>
+	{
+	public:
+		using BasicConstantProperty<IProperty, int_t, int_t, int_t>::BasicConstantProperty;
+
+		/*override from BasicProperty*/
+		ICProperty *tryAsConstant() override { return this; }
+	};
+	class RCProperty final : public BasicConstantProperty<RProperty, real_t, real_t, real_t>
+	{
+	public:
+		using BasicConstantProperty<RProperty, real_t, real_t, real_t>::BasicConstantProperty;
+
+		/*override from BasicProperty*/
+		RCProperty *tryAsConstant() override { return this; }
+	};
+	class SCProperty final : public BasicConstantProperty<SProperty, std::string, std::string&&, std::string const&>
+	{
+	public:
+		using BasicConstantProperty<SProperty, std::string, std::string&&, std::string const&>::BasicConstantProperty;
+
+		/*override from BasicProperty*/
+		SCProperty *tryAsConstant() override { return this; }
+	};
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	template<typename parent>
+	class ReferencedProperty : public parent
+	{
+	public:
+		ReferencedProperty(std::string &&ref_name) : _ref_name(std::move(ref_name)) {}
+
+		std::string const& reference_name() const { return _ref_name; }
+
+	private:
+		std::string _ref_name;
+	};
+
+	using BRProperty = ReferencedProperty<BProperty>;
+	using SRProperty = ReferencedProperty<SProperty>;
 }
 }

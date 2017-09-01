@@ -155,7 +155,7 @@ namespace
 	}
 }
 
-std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
+std::shared_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords)
 {
 	// check if operators from smallest to largest length
 	{
@@ -178,7 +178,7 @@ std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enu
 		}
 	}
 
-	std::unique_ptr<SequenceNode> res;
+	std::shared_ptr<SequenceNode> res;
 
 	const char *data = file.data();
 	size_t const fileLength = file.length();
@@ -189,7 +189,7 @@ std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enu
 	const char *const end = data + fileLength;
 
 	res.reset(new SequenceNode(file.start()));
-	SequenceNode::list_t &list = res->list();
+	list_t &list = res->list();
 
 	int line = file.start();
 
@@ -275,4 +275,79 @@ std::unique_ptr<SequenceNode> SRBT::Tokenize::parse(File const &file, Utils::Enu
 	}
 
 	throw Utils::TechnicalException(std::string(__FILE__) + ": error in parse");
+}
+
+namespace
+{
+	bool scanBraces(path_t const &path, list_t &sequence, iterator_t &it, int const braceLeft, int const braceRight)
+	{
+		Tokenize::TreeNode *head = &**it;
+
+		Tokenize::KeyNode *const key = head->tryAsKeyNode();
+		if(!key)
+		{
+			return false;
+		}
+		if(key->key() == braceRight)
+		{
+			throw exception_right_brace{key->line(), braceRight};
+		}
+		if(key->key() != braceLeft)
+		{
+			return false;
+		}
+
+		int num_braces = 1;
+		for(iterator_t i = std::next(it); i != sequence.end(); ++i)
+		{
+			head = &**it;
+			if(Tokenize::KeyNode *const key = head->tryAsKeyNode())
+			{
+				if(key->key() == braceLeft)
+				{
+					++num_braces;
+				}
+				else if(key->key() == braceRight)
+				{
+					--num_braces;
+					if(num_braces == 0)
+					{
+						std::shared_ptr<Tokenize::BracesNode> bracesNode(new Tokenize::BracesNode(head->line(), braceLeft));
+						sequence.splice(bracesNode->list().end(), bracesNode->list(), std::next(it), i);
+						iterator_t const new_it = sequence.insert(it, std::move(bracesNode));
+						sequence.erase(it, std::next(i));
+						it = new_it;
+						return true;
+					}
+				}
+			}
+		}
+
+		throw exception_unterminated_left_brace{head->line(), braceLeft};
+	}
+}
+
+void SRBT::Tokenize::parseBraces(path_t const &path, std::shared_ptr<SequenceNode> &sequenceNode, Utils::Enumerator<std::pair<int, int> const &> &braces)
+{
+	list_t &sequence = sequenceNode->list();
+	for(iterator_t it = sequence.begin(); it != sequence.end(); ++it)
+	{
+		braces.reset();
+		while(braces.next())
+		{
+			if(scanBraces(path, sequence, it, braces.current().first, braces.current().second))
+			{
+				std::shared_ptr<SequenceNode> bracesNode = std::static_pointer_cast<BracesNode>(*it);
+				parseBraces(path, bracesNode, braces);
+				*it = bracesNode;
+				break;
+			}
+		}
+	}
+
+	if(sequence.size() == 1 && sequence.front()->tryAsBracesNode())
+	{
+		std::shared_ptr<BracesNode> bracesNode = std::static_pointer_cast<BracesNode>(sequence.front());
+		sequenceNode = bracesNode;
+	}
 }

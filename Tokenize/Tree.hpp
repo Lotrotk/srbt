@@ -15,6 +15,7 @@ namespace Tokenize
 	class SequenceNode;
 	class KeyNode;
 	class StringNode;
+	class BracesNode;
 
 	class TreeNode
 	{
@@ -27,6 +28,7 @@ namespace Tokenize
 		virtual StringNode * tryAsString() { return nullptr; }
 		virtual SequenceNode * tryAsSequence() { return nullptr; }
 		virtual KeyNode * tryAsKeyNode() { return nullptr; }
+		virtual BracesNode * tryAsBracesNode() { return nullptr; }
 
 	protected:
 		TreeNode(int const line) : _line(line) {}
@@ -62,24 +64,21 @@ namespace Tokenize
 		std::string _value;
 	};
 
-	class SequenceNode final : public TreeNode
-	{
-	public:
-		using list_t = std::list<TreeNodePtr>;
+	using list_t = std::list<TreeNodePtr>;
+	using iterator_t = list_t::iterator;
 
+	class SequenceNode : public TreeNode
+	{
 	public:
 		SequenceNode(int const line) : TreeNode(line) {}
 
 		list_t &list() { return _list; }
-		list_t const &list() const { return _list; }
 
 		SequenceNode * tryAsSequence() override { return this; }
 
 	private:
 		list_t _list;
 	};
-
-	using iterator_t = SequenceNode::list_t::iterator;
 
 	class KeyNode final : public TreeNode
 	{
@@ -94,6 +93,20 @@ namespace Tokenize
 		int _key;
 	};
 
+	class BracesNode final : public SequenceNode
+	{
+	public:
+		BracesNode(int const line, int leftBrace) : SequenceNode(line), _leftBrace(leftBrace) {}
+
+		int leftBrace() const { return _leftBrace; }
+
+		using TreeNode::tryAsKeyNode;
+		BracesNode * tryAsBracesNode() override { return this; }
+
+	private:
+		int const _leftBrace;
+	};
+
 	using key_t = std::pair<std::string, int>;
 
 	struct exception_unterminated_string{ int _line; };
@@ -106,6 +119,17 @@ namespace Tokenize
 	 * @return a sequence of tokennodes, stringnodes and keynodes
 	 * @throws exception_unterminated_string, exception_string_terminated_by_backslash, exception_special_character_not_supported
 	 */
-	std::unique_ptr<SequenceNode> parse(File const&, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords);
+	std::shared_ptr<SequenceNode> parse(File const&, Utils::Enumerator<key_t const&> &operators, Utils::Enumerator<key_t const&> &keywords);
+
+	struct exception_unterminated_left_brace{ int _line; int _leftBrace; };
+	struct exception_right_brace{ int _line; int _rightBrace; };
+	/**
+	 * @brief parseBraces
+	 * @param path
+	 * @param braces
+	 * @return
+	 * @throws exception_unterminated_left_brace, exception_right_brace
+	 */
+	void parseBraces(path_t const &path, std::shared_ptr<SequenceNode>&, Utils::Enumerator<std::pair<int, int> const &> &braces);
 }
 }

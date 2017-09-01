@@ -13,7 +13,7 @@ namespace Compiler
 	bool validInteger(std::string const &);
 	bool validReal(std::string const &);
 
-	IProperty::value_t toInteger(std::string const &);
-	RProperty::value_t toReal(std::string const &);
+	int_t toInteger(std::string const &);
+	real_t toReal(std::string const &);
 }
 }

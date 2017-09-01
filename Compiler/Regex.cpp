@@ -36,16 +36,16 @@ bool validReal(std::string const & word)
 	return std::regex_match(word, match, regex);
 }
 
-IProperty::value_t toInteger(std::string const & word)
+int_t toInteger(std::string const & word)
 {
-	IProperty::value_t value;
+	int_t value;
 	std::stringstream(word) >> value;
 	return value;
 }
 
-RProperty::value_t toReal(std::string const & word)
+real_t toReal(std::string const & word)
 {
-	RProperty::value_t value;
+	real_t value;
 	std::stringstream(word) >> value;
 	return value;
 }

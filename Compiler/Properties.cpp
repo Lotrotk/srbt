@@ -9,12 +9,29 @@ namespace SRBT
 {
 namespace Compiler
 {
-namespace prvt
-{
-	CompleteType &object_completetype_return::ret(Object const &o)
+	CompleteType ObjectProperty::getType() const
 	{
-		return o.module().objectType();
+		return CompleteType{PrimitiveType::kObject, PrimitiveType(_module.moduleId())};
 	}
-}
+
+	bool ObjectProperty::isType(CompleteType const &t) const
+	{
+		return t.size() == 2 && t.front() == PrimitiveType::kObject && t.back() == PrimitiveType(_module.moduleId());
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	CompleteType TypeProperty::getType() const
+	{
+		CompleteType res;
+		res.push_back(PrimitiveType::kType);
+		res.insert(res.end(), _myType.cbegin(), _myType.cend());
+		return res;
+	}
+
+	bool TypeProperty::isType(CompleteType const &t) const
+	{
+		return t.front() == PrimitiveType::kType && std::equal(std::next(_myType.cbegin()), _myType.cend(), t.cbegin(), t.cend());
+	}
 }
 }

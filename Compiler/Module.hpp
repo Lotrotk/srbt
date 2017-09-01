@@ -1,11 +1,11 @@
 #pragma once
 
-#include "MutableProperties.hpp"
+#include "Properties.hpp"
 
 #include "Utils/Macros.hpp"
+#include "Utils/Sharedpointer.hpp"
 
 #include <map>
-#include <memory>
 
 #include <experimental/filesystem>
 
@@ -78,18 +78,11 @@ namespace Compiler
 		class Member
 		{
 		public:
-			explicit Member(BMPropertyPtr const & property);
-			explicit Member(IMPropertyPtr const & property);
-			explicit Member(RMPropertyPtr const & property);
-			explicit Member(OMPropertyPtr const & property);
-			explicit Member(WMPropertyPtr const & property);
-			explicit Member(CompleteType const &type) : _type(type) {}
+			explicit Member(PropertyPtr const & property) : _type(property->getType()), _property(property) {}
+			explicit Member(CompleteType &&t) : _type(std::move(t)) {}
 
 			CompleteType type() const { return _type; }
 			PropertyPtr const & property() const { return _property; }
-
-		private:
-			explicit Member(PropertyPtr const &);
 
 		private:
 			CompleteType _type;
@@ -97,23 +90,19 @@ namespace Compiler
 		};
 
 		using Properties = std::map<std::string, Member>;
-		using id_t = unsigned int;
+		using id_t = std::underlying_type_t<PrimitiveType>;
 
 	public:
-		explicit Module(OriginPtr inOrigin) : _origin(std::move(inOrigin)), _moduleId(++_sModuleID), _object_type{id_t(_moduleId)}, _struct_type{PrimitiveType::kStruct, _object_type.front()} {}
+		explicit Module(OriginPtr inOrigin) : _origin(std::move(inOrigin)), _moduleId(++_sModuleID) {}
 
 		Origin const & origin() const { return *_origin; }
 
 		id_t moduleId() const { return _moduleId; }
-		CompleteType &objectType() const { return _object_type; }
-		CompleteType &structType() const { return _struct_type; }
 
 	private:
 		OriginPtr _origin;
 		Properties _properties;
 		id_t _moduleId;
-		CompleteType _object_type;
-		CompleteType _struct_type;
 
 		static id_t _sModuleID;
 

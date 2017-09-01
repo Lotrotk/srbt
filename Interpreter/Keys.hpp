@@ -45,8 +45,8 @@ namespace Interpret
 		kBool = 1000,
 		kInteger,
 		kReal,
-		kWord,
-		kStruct,
+		kString,
+		kType,
 	};
 }
 }

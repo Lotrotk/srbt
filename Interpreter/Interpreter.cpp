@@ -15,6 +15,7 @@ namespace
 {
 	Utils::RangeEnumerator<Tokenize::key_t const&, std::vector<Tokenize::key_t>::const_iterator> sEnumerator_for_operators;
 	Utils::RangeEnumerator<Tokenize::key_t const&, std::vector<Tokenize::key_t>::const_iterator> sEnumerator_for_keywords;
+	Utils::RangeEnumerator<std::pair<int, int> const&, std::vector<std::pair<int, int>>::const_iterator> sEnumerator_for_braces;
 
 	struct InitEnumberators
 	{
@@ -53,20 +54,27 @@ namespace
 			_operators.push_back(Tokenize::key_t{">=", Operators::kMoreOrEqual});
 			_operators.push_back(Tokenize::key_t{">=", Operators::kHashHashtag});
 
-			sEnumerator_for_operators = Utils::RangeEnumerator<Tokenize::key_t const&, std::vector<Tokenize::key_t>::const_iterator>(_operators.cbegin(), _operators.cend());
+			sEnumerator_for_operators = decltype(sEnumerator_for_operators)(_operators.cbegin(), _operators.cend());
 
 			_keywords.push_back(Tokenize::key_t{"bool", Keywords::kBool});
 			_keywords.push_back(Tokenize::key_t{"int", Keywords::kInteger});
 			_keywords.push_back(Tokenize::key_t{"real", Keywords::kReal});
-			_keywords.push_back(Tokenize::key_t{"word", Keywords::kWord});
-			_keywords.push_back(Tokenize::key_t{"type", Keywords::kStruct});
+			_keywords.push_back(Tokenize::key_t{"string", Keywords::kString});
+			_keywords.push_back(Tokenize::key_t{"type", Keywords::kType});
 
-			sEnumerator_for_keywords = Utils::RangeEnumerator<Tokenize::key_t const&, std::vector<Tokenize::key_t>::const_iterator>(_keywords.cbegin(), _keywords.cend());
+			sEnumerator_for_keywords = decltype(sEnumerator_for_keywords)(_keywords.cbegin(), _keywords.cend());
+
+			_braces.push_back(std::make_pair(Operators::kBraceLeft, Operators::kBraceRight));
+			_braces.push_back(std::make_pair(Operators::kCurlyBraceLeft, Operators::kCurlyBraceRight));
+			_braces.push_back(std::make_pair(Operators::kSquareBraceLeft, Operators::kSquareBraceRight));
+
+			sEnumerator_for_braces = decltype(sEnumerator_for_braces)(_braces.cbegin(), _braces.cend());
 		}
 
 	private:
 		std::vector<Tokenize::key_t> _operators;
 		std::vector<Tokenize::key_t> _keywords;
+		std::vector<std::pair<int, int>> _braces;
 	};
 	const InitEnumberators initEnumerators;
 
@@ -77,10 +85,11 @@ Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 {
 	Compiler::ModulePtr res;
 
-	std::unique_ptr<Tokenize::SequenceNode> sequence;
+	std::shared_ptr<Tokenize::SequenceNode> sequence;
 	try
 	{
 		sequence = Tokenize::parse(file, sEnumerator_for_operators, sEnumerator_for_keywords);
+		Tokenize::parseBraces(file.path(), sequence, sEnumerator_for_braces);
 	}
 	catch(Tokenize::exception_unterminated_string const &e)
 	{
@@ -93,6 +102,14 @@ Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 	catch(Tokenize::exception_special_character_not_supported const &e)
 	{
 		throw ParseException(file.path(), file.start() + e._line, std::string() + "special character \\" + e._character + "not supported");
+	}
+	catch(Tokenize::exception_unterminated_left_brace const &e)
+	{
+		throw ParseException(file.path(), file.start() + e._line, "left brace has no corresponding right brace");
+	}
+	catch(Tokenize::exception_right_brace const &e)
+	{
+		throw ParseException(file.path(), file.start() + e._line, "right brace has no corresponding left brace");
 	}
 
 	Compiler::OriginPtr origin;
@@ -116,6 +133,8 @@ namespace
 {
 	void interPretStatements(Compiler::Module &module, Tokenize::SequenceNode &sequence)
 	{
+		Store store(module.origin());
+
 		for(Tokenize::iterator_t it = sequence.list().begin(); it != sequence.list().end();)
 		{
 			Tokenize::TreeNode &head = **it;
@@ -129,7 +148,7 @@ namespace
 					{
 						throw ParseException(module.origin().fileOrigin().path(), key->line(), "incomplete statement");
 					}
-					interpretMember(module, sequence, it);
+					tryInterpretMember(store, sequence, it);
 					break;
 				default:
 					throw ParseException(module.origin().fileOrigin().path(), key->line(), "keyword invalid here");

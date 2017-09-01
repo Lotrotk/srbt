@@ -2,6 +2,8 @@
 
 #include "Tokenize/File.hpp"
 
+#include <ostream>
+
 namespace SRBT
 {
 namespace Interpret
@@ -15,6 +17,12 @@ namespace Interpret
 		Tokenize::path_t _filename;
 		std::string _what;
 		int _line;
+
+	private:
+		friend std::ostream &operator<<(std::ostream &os, ParseException const &e)
+		{
+			return os << e._filename << ':' << e._line << ": " << e._what;
+		}
 	};
 }
 }

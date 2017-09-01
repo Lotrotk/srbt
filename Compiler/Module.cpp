@@ -1,7 +1,7 @@
 #include "Module.hpp"
 
 using namespace SRBT;
-using namespace Compiler;
+using namespace SRBT::Compiler;
 
 using namespace std::experimental;
 
@@ -51,34 +51,4 @@ std::string StructOrigin::toString() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Module::Member::Member(PropertyPtr const & property) : _type(property->type()), _property(property)
-{
-	if(!_property)
-	{
-		throw Utils::Unexpected(__FILE__, __LINE__, "invalid argument");
-	}
-}
-
-Module::Member::Member(BMPropertyPtr const &property) : Member(PropertyPtr(property))
-{
-}
-
-Module::Member::Member(IMPropertyPtr const &property) : Member(PropertyPtr(property))
-{
-}
-
-Module::Member::Member(RMPropertyPtr const &property) : Member(PropertyPtr(property))
-{
-}
-
-Module::Member::Member(OMPropertyPtr const &property) : Member(PropertyPtr(property))
-{
-}
-
-Module::Member::Member(WMPropertyPtr const &property) : Member(PropertyPtr(property))
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-id_t Module::_sModuleID{id_t(PrimitiveType::kCustom)};
+Module::id_t Module::_sModuleID{id_t(PrimitiveType::kCustom)};

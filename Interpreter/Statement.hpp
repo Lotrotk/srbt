@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Exception.hpp"
+#include "IdentifyType.hpp"
 #include "Keys.hpp"
+#include "Store.hpp"
 
 #include "Compiler/Module.hpp"
 
@@ -11,6 +13,7 @@ namespace SRBT
 {
 namespace Interpret
 {
-	void interpretMember(Compiler::Module&, Tokenize::SequenceNode&, Tokenize::iterator_t &);
+	bool tryInterpretMember(Store &store, Tokenize::SequenceNode&, Tokenize::iterator_t &);
+	Compiler::PropertyPtr interpretValue(Store &store, Tokenize::SequenceNode&, Tokenize::iterator_t &);
 }
 }
