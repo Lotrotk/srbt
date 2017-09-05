@@ -78,12 +78,12 @@ namespace
 	};
 	const InitEnumberators initEnumerators;
 
-	void interPretStatements(Compiler::Module &module, Tokenize::SequenceNode &sequence);
+	void interPretStatements(FR::Module &module, Tokenize::SequenceNode &sequence);
 }
 
-Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
+FR::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 {
-	Compiler::ModulePtr res;
+	FR::ModulePtr res;
 
 	std::shared_ptr<Tokenize::SequenceNode> sequence;
 	try
@@ -112,17 +112,17 @@ Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 		throw ParseException(file.path(), file.start() + e._line, "right brace has no corresponding left brace");
 	}
 
-	Compiler::OriginPtr origin;
+	FR::OriginPtr origin;
 	if(Tokenize::TextFile const *const textFile = dynamic_cast<Tokenize::TextFile const*>(&file))
 	{
-		origin.reset(new Compiler::FileOrigin(textFile->path()));
+		origin.reset(new FR::FileOrigin(textFile->path()));
 	}
 	else
 	{
 		throw Utils::TechnicalException("only textfile origins defined");
 	}
 
-	res.reset(new Compiler::Module(origin));
+	res.reset(new FR::Module(origin));
 
 	interPretStatements(*res, *sequence);
 
@@ -131,7 +131,7 @@ Compiler::ModulePtr SRBT::Interpret::interpretModule(Tokenize::File const &file)
 
 namespace
 {
-	void interPretStatements(Compiler::Module &module, Tokenize::SequenceNode &sequence)
+	void interPretStatements(FR::Module &module, Tokenize::SequenceNode &sequence)
 	{
 		Store store(module.origin());
 

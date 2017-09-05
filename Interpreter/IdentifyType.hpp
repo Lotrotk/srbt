@@ -1,19 +1,19 @@
 #pragma once
 
-#include "Compiler/Properties.hpp"
+#include "FirstRound/Properties.hpp"
 
 namespace SRBT
 {
 namespace Interpret
 {
-	bool isBool(Compiler::CompleteType const &ct);
-	bool isInteger(Compiler::CompleteType const &ct);
-	bool isReal(Compiler::CompleteType const &ct);
-	bool isWord(Compiler::CompleteType const &ct);
-	bool isType(Compiler::CompleteType const &ct);
+	bool isBool(FR::CompleteType const &ct);
+	bool isInteger(FR::CompleteType const &ct);
+	bool isReal(FR::CompleteType const &ct);
+	bool isWord(FR::CompleteType const &ct);
+	bool isType(FR::CompleteType const &ct);
 	/**
 	 * @return kNo_custom_type on failure
 	 */
-	Compiler::PrimitiveType tryCustomTypeOfObject(Compiler::CompleteType const &ct);
+	FR::PrimitiveType tryCustomTypeOfObject(FR::CompleteType const &);
 }
 }

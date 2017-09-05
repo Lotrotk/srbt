@@ -6,7 +6,9 @@
 
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace FR
 {
 	bool validPropertyName(std::string const &);
 	bool validReferencedName(std::string const &);
@@ -15,5 +17,6 @@ namespace Compiler
 
 	int_t toInteger(std::string const &);
 	real_t toReal(std::string const &);
+}
 }
 }

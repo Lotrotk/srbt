@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Tokenize/File.hpp"
-#include "Compiler/Module.hpp"
+#include "FirstRound/Module.hpp"
 
 
 namespace SRBT
@@ -11,6 +11,6 @@ namespace Interpret
 	/**
 	 * @throws : ParseException
 	 */
-	Compiler::ModulePtr interpretModule(Tokenize::File const&);
+	FR::ModulePtr interpretModule(Tokenize::File const&);
 }
 }

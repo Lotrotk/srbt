@@ -11,7 +11,9 @@
 
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace FR
 {
 	class Origin;
 	class FileOrigin;
@@ -123,5 +125,6 @@ namespace Compiler
 	private:
 		STATIC_ALLOCATION_ONLY
 	};
+}
 }
 }

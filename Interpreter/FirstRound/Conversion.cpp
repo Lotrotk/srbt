@@ -1,9 +1,10 @@
 #include "Conversion.hpp"
 
 using namespace SRBT;
-using namespace SRBT::Compiler;
+using namespace SRBT::Interpret;
+using namespace SRBT::Interpret::FR;
 
-PropertyPtr SRBT::Compiler::Conversion::tryConvertTo(PropertyPtr const &property, CompleteType const &type)
+PropertyPtr SRBT::Interpret::FR::Conversion::tryConvertTo(PropertyPtr const &property, CompleteType const &type)
 {
 	PropertyPtr res;
 

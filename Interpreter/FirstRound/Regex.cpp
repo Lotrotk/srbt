@@ -3,9 +3,15 @@
 #include <regex>
 #include <sstream>
 
+using namespace SRBT;
+using namespace SRBT::Interpret;
+using namespace SRBT::Interpret::FR;
+
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace SRBT
 {
 
 bool validPropertyName(std::string const & word)
@@ -50,5 +56,6 @@ real_t toReal(std::string const & word)
 	return value;
 }
 
+}
 }
 }

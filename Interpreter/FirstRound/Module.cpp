@@ -1,7 +1,8 @@
 #include "Module.hpp"
 
 using namespace SRBT;
-using namespace SRBT::Compiler;
+using namespace SRBT::Interpret;
+using namespace SRBT::Interpret::FR;
 
 using namespace std::experimental;
 

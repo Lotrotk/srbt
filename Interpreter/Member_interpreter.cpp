@@ -1,7 +1,7 @@
 #include "Statement.hpp"
 
-#include "Compiler/Conversion.hpp"
-#include "Compiler/Regex.hpp"
+#include "FirstRound/Conversion.hpp"
+#include "FirstRound/Regex.hpp"
 
 using namespace SRBT;
 using namespace SRBT::Interpret;
@@ -10,7 +10,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 {
 	Tokenize::TreeNode *head = &**it;
 
-	Compiler::CompleteType completeType;
+	FR::CompleteType completeType;
 	{
 		Tokenize::KeyNode const *const type = head->tryAsKeyNode();
 		if(!type)
@@ -21,7 +21,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 			{
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), "member is missing type");
 			}
-			Compiler::PropertyPtr const * const p = store.find(customType->token());
+			FR::PropertyPtr const * const p = store.find(customType->token());
 			if(!p)
 			{
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), customType->token() + " was not defined");
@@ -31,7 +31,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), customType->token() + " is not a type");
 			}
 
-			Compiler::TypeProperty const &tproperty = static_cast<Compiler::TypeProperty const&>(**p);
+			FR::TypeProperty const &tproperty = static_cast<FR::TypeProperty const&>(**p);
 			completeType = tproperty.getType();
 		}
 		else
@@ -39,19 +39,19 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 			switch(type->key())
 			{
 			case Keywords::kBool:
-				completeType = Compiler::BProperty::type();
+				completeType = FR::BProperty::type();
 				break;
 			case Keywords::kInteger:
-				completeType = Compiler::IProperty::type();
+				completeType = FR::IProperty::type();
 				break;
 			case Keywords::kReal:
-				completeType = Compiler::RProperty::type();
+				completeType = FR::RProperty::type();
 				break;
 			case Keywords::kString:
-				completeType = Compiler::SProperty::type();
+				completeType = FR::SProperty::type();
 				break;
 			case Keywords::kType:
-				completeType = Compiler::CompleteType{Compiler::PrimitiveType::kType};
+				completeType = FR::CompleteType{FR::PrimitiveType::kType};
 				break;
 			default:
 				return false;
@@ -67,7 +67,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 	head = &**it;
 
 	Tokenize::TokenNode const *const name = head->tryAsToken();
-	if(!name || Compiler::validPropertyName(name->token()))
+	if(!name || FR::validPropertyName(name->token()))
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "expecting valid variable name");
 	}
@@ -97,7 +97,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 	}
 	head = &**it;
 
-	Compiler::PropertyPtr const value = Compiler::Conversion::tryConvertTo(interpretValue(store, sequence, it), completeType);
+	FR::PropertyPtr const value = FR::Conversion::tryConvertTo(interpretValue(store, sequence, it), completeType);
 	if(!value)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "invalid definition");

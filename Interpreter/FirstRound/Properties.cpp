@@ -3,11 +3,14 @@
 #include "Module.hpp"
 
 using namespace SRBT;
-using namespace SRBT::Compiler;
+using namespace SRBT::Interpret;
+using namespace SRBT::Interpret::FR;
 
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace FR
 {
 	CompleteType ObjectProperty::getType() const
 	{
@@ -33,5 +36,6 @@ namespace Compiler
 	{
 		return t.front() == PrimitiveType::kType && std::equal(std::next(_myType.cbegin()), _myType.cend(), t.cbegin(), t.cend());
 	}
+}
 }
 }

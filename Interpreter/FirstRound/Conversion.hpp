@@ -4,7 +4,9 @@
 
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace FR
 {
 	namespace Conversion
 	{
@@ -32,5 +34,6 @@ namespace Compiler
 
 		PropertyPtr tryConvertTo(PropertyPtr const &, CompleteType const &);
 	}
+}
 }
 }

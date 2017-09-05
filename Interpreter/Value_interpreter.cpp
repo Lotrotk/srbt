@@ -5,13 +5,13 @@ using namespace SRBT::Interpret;
 
 namespace
 {
-	Compiler::PropertyPtr interpretSingleValue(Store &store, Tokenize::TreeNode &node)
+	FR::PropertyPtr interpretSingleValue(Store &store, Tokenize::TreeNode &node)
 	{
-		Compiler::PropertyPtr res;
+		FR::PropertyPtr res;
 
 		if(Tokenize::StringNode *const s = node.tryAsString())
 		{
-			res.reset(new Compiler::SCProperty(s->value()));
+			res.reset(new FR::SCProperty(s->value()));
 		}
 		//else if(Tokenize::TokenNode *const token = node.tryAsToken())
 		{
@@ -30,9 +30,9 @@ namespace
 	}
 }
 
-Compiler::PropertyPtr SRBT::Interpret::interpretValue(Store &store, Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
+FR::PropertyPtr SRBT::Interpret::interpretValue(Store &store, Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
 {
-	Compiler::PropertyPtr res;
+	FR::PropertyPtr res;
 
 	Tokenize::TreeNode *head = &**it;
 	if(interpretSingleValue(store, *head))

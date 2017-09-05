@@ -8,7 +8,9 @@
 
 namespace SRBT
 {
-namespace Compiler
+namespace Interpret
+{
+namespace FR
 {
 	class Module;
 	class Property;
@@ -175,5 +177,6 @@ namespace Compiler
 
 	using BRProperty = ReferencedProperty<BProperty>;
 	using SRProperty = ReferencedProperty<SProperty>;
+}
 }
 }

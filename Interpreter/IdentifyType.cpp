@@ -7,20 +7,20 @@ namespace SRBT
 {
 namespace Interpret
 {
-	bool isBool(Compiler::CompleteType const &ct) { return ct.size() == 1 && ct.front() == Compiler::PrimitiveType::kBool; }
-	bool isInteger(Compiler::CompleteType const &ct) { return ct.size() == 1 && ct.front() == Compiler::PrimitiveType::kInteger; }
-	bool isReal(Compiler::CompleteType const &ct) { return ct.size() == 1 && ct.front() == Compiler::PrimitiveType::kReal; }
-	bool isString(Compiler::CompleteType const &ct) { return ct.size() == 1 && ct.front() == Compiler::PrimitiveType::kString; }
-	bool isType(Compiler::CompleteType const &ct) { return ct.size() == 1 && ct.front() == Compiler::PrimitiveType::kType; }
+	bool isBool(FR::CompleteType const &ct) { return ct.size() == 1 && ct.front() == FR::PrimitiveType::kBool; }
+	bool isInteger(FR::CompleteType const &ct) { return ct.size() == 1 && ct.front() == FR::PrimitiveType::kInteger; }
+	bool isReal(FR::CompleteType const &ct) { return ct.size() == 1 && ct.front() == FR::PrimitiveType::kReal; }
+	bool isString(FR::CompleteType const &ct) { return ct.size() == 1 && ct.front() == FR::PrimitiveType::kString; }
+	bool isType(FR::CompleteType const &ct) { return ct.size() == 1 && ct.front() == FR::PrimitiveType::kType; }
 
-	Compiler::PrimitiveType tryCustomTypeOfObject(Compiler::CompleteType const &ct)
+	FR::PrimitiveType tryCustomTypeOfObject(FR::CompleteType const &ct)
 	{
-		if(ct.size() == 1 && ct.front() > Compiler::PrimitiveType::kNo_custom_type)
+		if(ct.size() == 1 && ct.front() > FR::PrimitiveType::kNo_custom_type)
 		{
 			return ct.front();
 		}
 
-		return Compiler::PrimitiveType::kNo_custom_type;
+		return FR::PrimitiveType::kNo_custom_type;
 	}
 }
 }
