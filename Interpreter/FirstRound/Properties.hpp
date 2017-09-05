@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Utils/Macros.hpp"
-#include "Utils/Sharedpointer.hpp"
 
 #include <list>
+#include <memory>
 #include <string>
 
 namespace SRBT
@@ -14,8 +14,8 @@ namespace FR
 {
 	class Module;
 	class Property;
-	MAKE_SHARED_PTR(Module);
-	MAKE_SHARED_PTR(Property);
+	using ModulePtr = std::shared_ptr<Module>;
+	using PropertyPtr = std::shared_ptr<Property>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,16 +72,16 @@ namespace FR
 
 	class BCProperty;
 	using BProperty = BasicProperty<bool, BCProperty, PrimitiveType::kBool>;
-	MAKE_SHARED_PTR(BProperty);
+	using BPropertyPtr = std::shared_ptr<BProperty>;
 	class ICProperty;
 	using IProperty = BasicProperty<int_t, ICProperty, PrimitiveType::kInteger>;
-	MAKE_SHARED_PTR(IProperty);
+	using IPropertyPtr = std::shared_ptr<IProperty>;
 	class RCProperty;
 	using RProperty = BasicProperty<real_t, RCProperty, PrimitiveType::kReal>;
-	MAKE_SHARED_PTR(RProperty);
+	using RPropertyPtr = std::shared_ptr<RProperty>;
 	class SCProperty;
 	using SProperty = BasicProperty<std::string, SCProperty, PrimitiveType::kString>;
-	MAKE_SHARED_PTR(SProperty);
+	using SPropertyPtr = std::shared_ptr<SProperty>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -97,7 +97,7 @@ namespace FR
 	private:
 		Module &_module;
 	};
-	MAKE_SHARED_PTR(ObjectProperty);
+	using ObjectPropertyPtr= std::shared_ptr<ObjectProperty>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -18,9 +18,9 @@ namespace FR
 	class Origin;
 	class FileOrigin;
 	class StructOrigin;
-	MAKE_SHARED_PTR(Origin);
-	MAKE_SHARED_PTR(FileOrigin);
-	MAKE_SHARED_PTR(StructOrigin);
+	using OriginPtr = std::shared_ptr<Origin>;
+	using FileOriginPtr = std::shared_ptr<FileOrigin>;
+	using StructOriginPtr = std::shared_ptr<StructOrigin>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -77,21 +77,7 @@ namespace FR
 	class Module
 	{
 	public:
-		class Member
-		{
-		public:
-			explicit Member(PropertyPtr const & property) : _type(property->getType()), _property(property) {}
-			explicit Member(CompleteType &&t) : _type(std::move(t)) {}
-
-			CompleteType type() const { return _type; }
-			PropertyPtr const & property() const { return _property; }
-
-		private:
-			CompleteType _type;
-			PropertyPtr _property;
-		};
-
-		using Properties = std::map<std::string, Member>;
+		using Properties = std::map<std::string, CompleteType>;
 		using id_t = std::underlying_type_t<PrimitiveType>;
 
 	public:
@@ -101,30 +87,17 @@ namespace FR
 
 		id_t moduleId() const { return _moduleId; }
 
+		Properties &properties() { return _properties; }
+
 	private:
 		OriginPtr _origin;
 		Properties _properties;
 		id_t _moduleId;
 
 		static id_t _sModuleID;
-
-	private:
-		friend class MAccess;
 	};
 
-	MAKE_SHARED_PTR(Module);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	class MAccess
-	{
-	protected:
-		static Module::Properties const & const_ioProperties(Module const & module) { return module._properties; }
-		static Module::Properties & ioProperties(Module & module) { return module._properties; }
-
-	private:
-		STATIC_ALLOCATION_ONLY
-	};
+	using ModulePtr= std::shared_ptr<Module>;
 }
 }
 }

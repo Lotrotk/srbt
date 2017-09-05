@@ -3,7 +3,6 @@
 #include "File.hpp"
 
 #include "Utils/Enumerator.hpp"
-#include "Utils/Sharedpointer.hpp"
 
 #include "list"
 
@@ -36,7 +35,7 @@ namespace Tokenize
 	private:
 		int _line;
 	};
-	MAKE_SHARED_PTR(TreeNode);
+	using TreeNodePtr = std::shared_ptr<TreeNode>;
 
 	class TokenNode final : public TreeNode
 	{

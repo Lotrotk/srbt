@@ -6,9 +6,6 @@
 #include <memory>
 #include <utility>
 
-#define MAKE_SHARED_PTR(classname) using classname##Ptr = std::shared_ptr<classname>
-#define MAKE_SHARED_CONST_PTR(classname) using Const##classname##Ptr = std::shared_ptr<classname const>
-
 namespace Utils
 {
 	/**
