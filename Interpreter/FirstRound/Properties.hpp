@@ -163,20 +163,22 @@ namespace FR
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	template<typename parent>
-	class ReferencedProperty : public parent
+	class ReferencedProperty final : public Property
 	{
 	public:
-		ReferencedProperty(std::string &&ref_name) : _ref_name(std::move(ref_name)) {}
+		ReferencedProperty(std::string &&ref_name) : _ref_name{std::move(ref_name)} {}
 
-		std::string const& reference_name() const { return _ref_name; }
+		std::list<std::string> const& reference_name() const { return _ref_name; }
+
+		void merge(ReferencedProperty &&continuation);
+
+		/*override from Property*/
+		CompleteType getType() const override { return CompleteType(); }
+		bool isType(CompleteType const &) const override { return false; }
 
 	private:
-		std::string _ref_name;
+		std::list<std::string> _ref_name;
 	};
-
-	using BRProperty = ReferencedProperty<BProperty>;
-	using SRProperty = ReferencedProperty<SProperty>;
 }
 }
 }

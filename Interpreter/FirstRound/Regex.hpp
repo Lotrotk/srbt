@@ -11,12 +11,9 @@ namespace Interpret
 namespace FR
 {
 	bool validPropertyName(std::string const &);
-	bool validReferencedName(std::string const &);
-	bool validInteger(std::string const &);
-	bool validReal(std::string const &);
-
-	int_t toInteger(std::string const &);
-	real_t toReal(std::string const &);
+	bool validInteger(std::string const &, int_t &outValue);
+	bool validReal(std::string const &, real_t &outValue);
+	bool validBool(std::string const &, bool &outValue);
 }
 }
 }

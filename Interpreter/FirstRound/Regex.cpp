@@ -21,39 +21,43 @@ bool validPropertyName(std::string const & word)
 	return std::regex_match(word, match, regex);
 }
 
-bool validReferencedName(std::string const & word)
-{
-	std::regex regex("^[a-zA-Z_][0-9a-zA-Z_]*([.][a-zA-Z_][0-9a-zA-Z_]*)*$");
-	std::smatch match;
-	return std::regex_match(word, match, regex);
-}
-
-bool validInteger(std::string const & word)
+bool validInteger(std::string const & word, int_t &value)
 {
 	std::regex regex("^[0-9]+$");
 	std::smatch match;
-	return std::regex_match(word, match, regex);
+	if(std::regex_match(word, match, regex))
+	{
+		std::stringstream(word) >> value;
+		return true;
+	}
+	return false;
 }
 
-bool validReal(std::string const & word)
+bool validReal(std::string const & word, real_t &value)
 {
 	std::regex regex("^[0-9]+[.][0-9]*$");
 	std::smatch match;
-	return std::regex_match(word, match, regex);
+	if(std::regex_match(word, match, regex))
+	{
+		std::stringstream(word) >> value;
+		return true;
+	}
+	return false;
 }
 
-int_t toInteger(std::string const & word)
+bool validBool(std::string const &word, bool &value)
 {
-	int_t value;
-	std::stringstream(word) >> value;
-	return value;
-}
-
-real_t toReal(std::string const & word)
-{
-	real_t value;
-	std::stringstream(word) >> value;
-	return value;
+	if(word == "true")
+	{
+		value = true;
+		return true;
+	}
+	if(word == "false")
+	{
+		value = false;
+		return true;
+	}
+	return false;
 }
 
 }

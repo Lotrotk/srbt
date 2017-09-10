@@ -36,6 +36,13 @@ namespace FR
 	{
 		return t.front() == PrimitiveType::kType && std::equal(std::next(_myType.cbegin()), _myType.cend(), t.cbegin(), t.cend());
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void ReferencedProperty::merge(ReferencedProperty &&continuation)
+	{
+		continuation._ref_name.splice(_ref_name.end(), _ref_name, continuation._ref_name.begin(), continuation._ref_name.end());
+	}
 }
 }
 }
