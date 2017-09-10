@@ -1,6 +1,5 @@
 #include "Statement.hpp"
 
-#include "FirstRound/Conversion.hpp"
 #include "FirstRound/Regex.hpp"
 
 using namespace SRBT;
@@ -10,7 +9,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 {
 	Tokenize::TreeNode *head = &**it;
 
-	FR::CompleteType completeType;
+	FR::CompleteTypePtr completeType;
 	{
 		Tokenize::KeyNode const *const type = head->tryAsKeyNode();
 		if(!type)
@@ -21,37 +20,45 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 			{
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), "member is missing type");
 			}
-			FR::PropertyPtr const * const p = store.find(customType->token());
-			if(!p)
+			Store::Value const * const v = store.find(customType->token());
+			if(!v)
 			{
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), customType->token() + " was not defined");
 			}
-			if(!isType(p->get()->getType()))
+			FR::TProperty *const t = dynamic_cast<FR::TProperty*>(v->_property.get());
+			if(!t)
 			{
 				throw ParseException(store.origin().fileOrigin().path(), head->line(), customType->token() + " is not a type");
 			}
 
-			FR::TypeProperty const &tproperty = static_cast<FR::TypeProperty const&>(**p);
-			completeType = tproperty.getType();
+			if(FR::TCProperty const*const ct = t->tryAsConstant())
+			{
+				completeType = ct->value();
+			}
+			else
+			{
+				//unknown
+				completeType = FR::TProperty::type;
+			}
 		}
 		else
 		{
 			switch(type->key())
 			{
 			case Keywords::kBool:
-				completeType = FR::BProperty::type();
+				completeType = FR::BProperty::type;
 				break;
 			case Keywords::kInteger:
-				completeType = FR::IProperty::type();
+				completeType = FR::IProperty::type;
 				break;
 			case Keywords::kReal:
-				completeType = FR::RProperty::type();
+				completeType = FR::RProperty::type;
 				break;
 			case Keywords::kString:
-				completeType = FR::SProperty::type();
+				completeType = FR::SProperty::type;
 				break;
 			case Keywords::kType:
-				completeType = FR::CompleteType{FR::PrimitiveType::kType};
+				completeType = FR::TProperty::type;
 				break;
 			default:
 				return false;
@@ -97,13 +104,13 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 	}
 	head = &**it;
 
-	FR::PropertyPtr const value = FR::Conversion::tryConvertTo(interpretValue(store, sequence, it), completeType);
+	FR::PropertyPtr const value = interpretValue(sequence, it);
 	if(!value)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "invalid definition");
 	}
 
-	store.insert_unique(name->token(), value);
+	store.insert_unique(name->token(), value, completeType);
 
 	return true;
 }

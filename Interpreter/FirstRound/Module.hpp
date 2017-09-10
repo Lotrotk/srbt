@@ -77,7 +77,7 @@ namespace FR
 	class Module
 	{
 	public:
-		using Properties = std::map<std::string, CompleteType>;
+		using Properties = std::map<std::string, CompleteTypePtr>;
 		using id_t = std::underlying_type_t<PrimitiveType>;
 
 	public:

@@ -18,20 +18,20 @@ namespace
 	 * @param begin : points to the first reference. If this functions extends it, it will be set to point to the last reference
 	 * @param reference : the first reference, at begin
 	 */
-	void interpretReference(Argument const &arg, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference);
+	void interpretReference(Tokenize::SequenceNode &, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference);
 	/**
 	 * @brief reads a single token, or multiple if they form a group (parentheses, reference)
 	 * @param begin : points to the current item, is set to point to the last item read
 	 */
-	FR::PropertyPtr interpretSingleValue(Argument const &arg, Tokenize::iterator_t &begin);
+	FR::PropertyPtr interpretSingleValue(Tokenize::SequenceNode &, Tokenize::iterator_t &begin);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void interpretReference(Argument const &arg, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference)
+	void interpretReference(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference)
 	{
 		int const line = static_cast<Tokenize::TreeNode&>(**begin).line();
 		Tokenize::iterator_t it = std::next(begin);
-		if(it == arg._sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
+		if(it == sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
 		{
 			return;
 		}
@@ -42,11 +42,11 @@ namespace
 			return;
 		}
 		++it;
-		if(it == arg._sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
+		if(it == sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
 		{
 			return;
 		}
-		FR::PropertyPtr const continued = interpretSingleValue(arg, it);
+		FR::PropertyPtr const continued = interpretSingleValue(sequence, it);
 		if(std::shared_ptr<FR::ReferencedProperty> r = std::dynamic_pointer_cast<FR::ReferencedProperty>(continued))
 		{
 			reference.merge(std::move(*r));
@@ -54,7 +54,7 @@ namespace
 		}
 	}
 
-	FR::PropertyPtr interpretSingleValue(Argument const &arg, Tokenize::iterator_t &begin)
+	FR::PropertyPtr interpretSingleValue(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &begin)
 	{
 		Tokenize::TreeNode &node = **begin;
 
@@ -84,7 +84,7 @@ namespace
 			else if(FR::validPropertyName(token->token()))
 			{
 				std::shared_ptr<FR::ReferencedProperty> reference(new FR::ReferencedProperty(std::string(token->token())));
-				interpretReference(arg, begin, *reference);
+				interpretReference(sequence, begin, *reference);
 				res = reference;
 			}
 		}
@@ -101,13 +101,7 @@ namespace
 	}
 }
 
-FR::PropertyPtr SRBT::Interpret::interpretValue(Store &store, Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
+FR::PropertyPtr SRBT::Interpret::interpretValue(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
 {
-	Argument arg
-	{
-		._store = store,
-		._sequence = sequence,
-	};
-
-	return interpretSingleValue(arg, it);
+	return ::interpretSingleValue(sequence, it);
 }

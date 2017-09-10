@@ -32,7 +32,28 @@ namespace FR
 		kCustom = 100,
 	};
 
-	using CompleteType = std::list<PrimitiveType>;
+	class CompleteType
+	{
+	public:
+		virtual ~CompleteType() = default;
+
+		virtual bool operator==(CompleteType const &) const = 0;
+	};
+	using CompleteTypePtr = std::shared_ptr<CompleteType>;
+
+	class BasicCompleteType : public CompleteType
+	{
+	public:
+		BasicCompleteType(PrimitiveType const primitive) : _primitive(primitive) {}
+
+		bool operator==(BasicCompleteType const &) const;
+
+		/*override from CompleteType*/
+		bool operator==(CompleteType const &) const override;
+
+	private:
+		const PrimitiveType _primitive;
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,78 +62,53 @@ namespace FR
 	public:
 		virtual ~Property() = default;
 
-		bool isType(PrimitiveType const p) const { return isType(CompleteType{p}); }
-
-		/*abrstract*/
-		virtual CompleteType getType() const = 0;
-		virtual bool isType(CompleteType const &) const = 0;
+	protected:
+		Property() = default;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	using int_t = int;
-	using real_t = double;
-
-	template<typename T, typename constant_type, PrimitiveType P>
+	template<PrimitiveType P, typename constant_type>
 	class BasicProperty : public Property
 	{
 	public:
-		/*override from Property*/
-		CompleteType getType() const override { return type(); }
-		bool isType(CompleteType const &t) const override { return t.size() == 1 && t.front() == P; }
-
-		static CompleteType const &type() { static CompleteType const t{P}; return t; }
-
 		/*abstract*/
 		virtual constant_type *tryAsConstant() { return nullptr; }
 
 	protected:
 		BasicProperty() = default;
+
+	public:
+		static std::shared_ptr<BasicCompleteType> const type;
 	};
 
 	class BCProperty;
-	using BProperty = BasicProperty<bool, BCProperty, PrimitiveType::kBool>;
+	using BProperty = BasicProperty<PrimitiveType::kBool, BCProperty>;
 	using BPropertyPtr = std::shared_ptr<BProperty>;
 	class ICProperty;
-	using IProperty = BasicProperty<int_t, ICProperty, PrimitiveType::kInteger>;
+	using IProperty = BasicProperty<PrimitiveType::kInteger, ICProperty>;
 	using IPropertyPtr = std::shared_ptr<IProperty>;
 	class RCProperty;
-	using RProperty = BasicProperty<real_t, RCProperty, PrimitiveType::kReal>;
+	using RProperty = BasicProperty<PrimitiveType::kReal, RCProperty>;
 	using RPropertyPtr = std::shared_ptr<RProperty>;
 	class SCProperty;
-	using SProperty = BasicProperty<std::string, SCProperty, PrimitiveType::kString>;
+	using SProperty = BasicProperty<PrimitiveType::kString, SCProperty>;
 	using SPropertyPtr = std::shared_ptr<SProperty>;
+	class TCProperty;
+	using TProperty = BasicProperty<PrimitiveType::kType, TCProperty>;
+	using TPropertyPtr = std::shared_ptr<TProperty>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	class ObjectProperty : public Property
 	{
 	public:
-		ObjectProperty(Module &module) : _module(module) {}
-
-		/*override from Property*/
-		CompleteType getType() const override;
-		bool isType(CompleteType const &t) const override;
+		ObjectProperty(Module &module) {}//: _module(module) {}
 
 	private:
-		Module &_module;
+		//Module &_module;
 	};
 	using ObjectPropertyPtr= std::shared_ptr<ObjectProperty>;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	class TypeProperty : public Property
-	{
-	public:
-		TypeProperty(CompleteType const &t) : _myType(t) {}
-
-		/*override from Property*/
-		CompleteType getType() const override;
-		bool isType(CompleteType const &t) const override;
-
-	private:
-		CompleteType _myType;
-	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -127,6 +123,9 @@ namespace FR
 	private:
 		v const _value;
 	};
+
+	using int_t = int;
+	using real_t = double;
 
 	class BCProperty final : public BasicConstantProperty<BProperty, bool, bool, bool>
 	{
@@ -160,6 +159,14 @@ namespace FR
 		/*override from BasicProperty*/
 		SCProperty *tryAsConstant() override { return this; }
 	};
+	class TCProperty final : public BasicConstantProperty<TProperty, CompleteTypePtr, CompleteTypePtr const&, CompleteTypePtr const&>
+	{
+	public:
+		using BasicConstantProperty<TProperty, CompleteTypePtr, CompleteTypePtr const&, CompleteTypePtr const&>::BasicConstantProperty;
+
+		/*override from BasicProperty*/
+		TCProperty *tryAsConstant() override { return this; }
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -171,10 +178,6 @@ namespace FR
 		std::list<std::string> const& reference_name() const { return _ref_name; }
 
 		void merge(ReferencedProperty &&continuation);
-
-		/*override from Property*/
-		CompleteType getType() const override { return CompleteType(); }
-		bool isType(CompleteType const &) const override { return false; }
 
 	private:
 		std::list<std::string> _ref_name;

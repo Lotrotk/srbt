@@ -12,30 +12,24 @@ namespace Interpret
 {
 namespace FR
 {
-	CompleteType ObjectProperty::getType() const
+	bool BasicCompleteType::operator==(BasicCompleteType const &t) const
 	{
-		return CompleteType{PrimitiveType::kObject, PrimitiveType(_module.moduleId())};
+		return t._primitive == _primitive;
 	}
 
-	bool ObjectProperty::isType(CompleteType const &t) const
+	bool BasicCompleteType::operator==(CompleteType const &t) const
 	{
-		return t.size() == 2 && t.front() == PrimitiveType::kObject && t.back() == PrimitiveType(_module.moduleId());
+		BasicCompleteType const*const b = dynamic_cast<BasicCompleteType const*>(&t);
+		return b && (*b == *this);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	CompleteType TypeProperty::getType() const
-	{
-		CompleteType res;
-		res.push_back(PrimitiveType::kType);
-		res.insert(res.end(), _myType.cbegin(), _myType.cend());
-		return res;
-	}
-
-	bool TypeProperty::isType(CompleteType const &t) const
-	{
-		return t.front() == PrimitiveType::kType && std::equal(std::next(_myType.cbegin()), _myType.cend(), t.cbegin(), t.cend());
-	}
+	template<> std::shared_ptr<BasicCompleteType> const BasicProperty<PrimitiveType::kBool, BCProperty>::type{new BasicCompleteType(PrimitiveType::kBool)};
+	template<> std::shared_ptr<BasicCompleteType> const BasicProperty<PrimitiveType::kInteger, ICProperty>::type{new BasicCompleteType(PrimitiveType::kInteger)};
+	template<> std::shared_ptr<BasicCompleteType> const BasicProperty<PrimitiveType::kReal, RCProperty>::type{new BasicCompleteType(PrimitiveType::kReal)};
+	template<> std::shared_ptr<BasicCompleteType> const BasicProperty<PrimitiveType::kString, SCProperty>::type{new BasicCompleteType(PrimitiveType::kString)};
+	template<> std::shared_ptr<BasicCompleteType> const BasicProperty<PrimitiveType::kType, TCProperty>::type{new BasicCompleteType(PrimitiveType::kType)};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
