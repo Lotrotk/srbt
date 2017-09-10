@@ -177,7 +177,7 @@ namespace FR
 
 		std::list<std::string> const& reference_name() const { return _ref_name; }
 
-		void merge(ReferencedProperty &&continuation);
+		void append(std::string &&);
 
 	private:
 		std::list<std::string> _ref_name;

@@ -5,8 +5,9 @@
 using namespace SRBT;
 using namespace SRBT::Interpret;
 
-bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
+void SRBT::Interpret::interpretDeclaraion(Store &store, Tokenize::iterator_t const begin, Tokenize::iterator_t const end)
 {
+	Tokenize::iterator_t it = begin;
 	Tokenize::TreeNode *head = &**it;
 
 	FR::CompleteTypePtr completeType;
@@ -61,13 +62,13 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 				completeType = FR::TProperty::type;
 				break;
 			default:
-				return false;
+				throw ParseException(store.origin().fileOrigin().path(), head->line(), "invalid keyword");
 			}
 		}
 	}
 
 	++it;
-	if(it == sequence.list().end())
+	if(it == end)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "variable is missing name");
 	}
@@ -85,7 +86,7 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 	}
 
 	++it;
-	if(it == sequence.list().end())
+	if(it == end)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "variable is missing definition");
 	}
@@ -98,19 +99,17 @@ bool SRBT::Interpret::tryInterpretMember(Store &store, Tokenize::SequenceNode &s
 	}
 
 	++it;
-	if(it == sequence.list().end())
+	if(it == end)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "variable is missing definition");
 	}
 	head = &**it;
 
-	FR::PropertyPtr const value = interpretValue(sequence, it);
+	FR::PropertyPtr const value = interpretExpression(it, end);
 	if(!value)
 	{
 		throw ParseException(store.origin().fileOrigin().path(), head->line(), "invalid definition");
 	}
 
 	store.insert_unique(name->token(), value, completeType);
-
-	return true;
 }

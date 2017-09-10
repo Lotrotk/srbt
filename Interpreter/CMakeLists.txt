@@ -5,14 +5,16 @@ set(HEADERS
 	Statement.hpp
 	Store.hpp
 	FirstRound/Module.hpp
+	FirstRound/Operators.hpp
 	FirstRound/Properties.hpp
 	FirstRound/Regex.hpp
 )
 
 
 set(SOURCES
+	Declaration_interpreter.cpp
+	Expression_interpreter.cpp
 	Interpreter.cpp
-	Member_interpreter.cpp
 	Store.cpp
 	Value_interpreter.cpp
 	FirstRound/Module.cpp

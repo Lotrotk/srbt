@@ -12,7 +12,19 @@ namespace SRBT
 {
 namespace Interpret
 {
-	bool tryInterpretMember(Store &store, Tokenize::SequenceNode&, Tokenize::iterator_t &);
-	FR::PropertyPtr interpretValue(Tokenize::SequenceNode&, Tokenize::iterator_t &);
+	/**
+	 * @brief reads a declaration
+	 * @param store : where to store the declaration + definition
+	 */
+	void interpretDeclaraion(Store &store, Tokenize::iterator_t begin, Tokenize::iterator_t end);
+	/**
+	 * @brief reads an expression
+	 */
+	FR::PropertyPtr interpretExpression(Tokenize::iterator_t begin, Tokenize::iterator_t end);
+	/**
+	 * @brief reads a single value
+	 * @param begin : set to last element read
+	 */
+	FR::PropertyPtr interpretValue(Tokenize::path_t const &path, Tokenize::iterator_t &begin, Tokenize::iterator_t end);
 }
 }

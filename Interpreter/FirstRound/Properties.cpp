@@ -33,9 +33,9 @@ namespace FR
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ReferencedProperty::merge(ReferencedProperty &&continuation)
+	void ReferencedProperty::append(std::string &&name)
 	{
-		continuation._ref_name.splice(_ref_name.end(), _ref_name, continuation._ref_name.begin(), continuation._ref_name.end());
+		_ref_name.push_back(std::move(name));
 	}
 }
 }

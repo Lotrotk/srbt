@@ -8,6 +8,8 @@
 
 #include "Utils/Exception.hpp"
 
+#include <algorithm>
+
 using namespace SRBT;
 using namespace SRBT::Interpret;
 
@@ -143,13 +145,28 @@ namespace
 				switch(key->key())
 				{
 				case kHashtag:
+				{
 					++it;
 					if(it == sequence.list().end())
 					{
 						throw ParseException(module.origin().fileOrigin().path(), key->line(), "incomplete statement");
 					}
-					tryInterpretMember(store, sequence, it);
+					Tokenize::iterator_t end = std::find_if(std::next(it), sequence.list().end(), [](Tokenize::TreeNodePtr const &node)
+					{
+						if(Tokenize::KeyNode const*const key = node->tryAsKeyNode())
+						{
+							return key->key() == Operators::kSemicolon;
+						}
+						return false;
+					});
+					if(end == sequence.list().end())
+					{
+						throw ParseException(module.origin().fileOrigin().path(), key->line(), "missing semicolon for statement");
+					}
+					interpretDeclaraion(store, it, end);
+					it = std::next(end);
 					break;
+				}
 				default:
 					throw ParseException(module.origin().fileOrigin().path(), key->line(), "keyword invalid here");
 				}

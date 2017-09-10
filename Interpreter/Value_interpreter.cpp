@@ -1,5 +1,6 @@
 #include "Statement.hpp"
 
+#include "FirstRound/Operators.hpp"
 #include "FirstRound/Regex.hpp"
 
 using namespace SRBT;
@@ -15,46 +16,52 @@ namespace
 
 	/**
 	 * @brief Reads a reference further on the same line (e.g. a. b.c.  d.e)
-	 * @param begin : points to the first reference. If this functions extends it, it will be set to point to the last reference
-	 * @param reference : the first reference, at begin
+	 * @param begin : points to lastest element already read in sequence, set to last element in sequence (unchanged if no sequence)
 	 */
-	void interpretReference(Tokenize::SequenceNode &, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference);
+	void interpretReference(Tokenize::iterator_t &begin, Tokenize::iterator_t const end, FR::ReferencedProperty &reference);
 	/**
 	 * @brief reads a single token, or multiple if they form a group (parentheses, reference)
-	 * @param begin : points to the current item, is set to point to the last item read
+	 * @param begin : set to last element in sequence (unchanged if no sequence)
 	 */
-	FR::PropertyPtr interpretSingleValue(Tokenize::SequenceNode &, Tokenize::iterator_t &begin);
+	FR::PropertyPtr interpretSingleValue(Tokenize::path_t const &path, Tokenize::iterator_t &begin, Tokenize::iterator_t end);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void interpretReference(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &begin, FR::ReferencedProperty &reference)
+	void interpretReference(Tokenize::iterator_t &begin, Tokenize::iterator_t const end, FR::ReferencedProperty &reference)
 	{
-		int const line = static_cast<Tokenize::TreeNode&>(**begin).line();
-		Tokenize::iterator_t it = std::next(begin);
-		if(it == sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
+		while(true)
 		{
-			return;
-		}
-		Tokenize::TreeNode &point = **it;
-		Tokenize::KeyNode *const keyNode = point.tryAsKeyNode();
-		if(!keyNode || keyNode->key() != Operators::kPoint)
-		{
-			return;
-		}
-		++it;
-		if(it == sequence.list().end() || static_cast<Tokenize::TreeNode&>(**it).line() != line)
-		{
-			return;
-		}
-		FR::PropertyPtr const continued = interpretSingleValue(sequence, it);
-		if(std::shared_ptr<FR::ReferencedProperty> r = std::dynamic_pointer_cast<FR::ReferencedProperty>(continued))
-		{
-			reference.merge(std::move(*r));
-			begin = it;
+			Tokenize::iterator_t it = std::next(begin);
+			if(it == end)
+			{
+				return;
+			}
+			Tokenize::KeyNode *const keyNode = static_cast<Tokenize::TreeNode&>(**it).tryAsKeyNode();
+			if(!keyNode || keyNode->key() != Operators::kPoint)
+			{
+				return;
+			}
+			++it;
+			if(it == end)
+			{
+				return;
+			}
+
+			if(Tokenize::TokenNode *const token = static_cast<Tokenize::TreeNode&>(**it).tryAsToken())
+			{
+				FR::int_t value_int;
+				FR::real_t value_real;
+				bool value_bool;
+				if(FR::validInteger(token->token(), value_int) || FR::validReal(token->token(), value_real) || FR::validBool(token->token(), value_bool) || !FR::validPropertyName(token->token()))
+				{
+					reference.append(std::string(token->token()));
+				}
+				begin = it;
+			}
 		}
 	}
 
-	FR::PropertyPtr interpretSingleValue(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &begin)
+	FR::PropertyPtr interpretSingleValue(Tokenize::path_t const &path, Tokenize::iterator_t &begin, Tokenize::iterator_t const end)
 	{
 		Tokenize::TreeNode &node = **begin;
 
@@ -84,24 +91,45 @@ namespace
 			else if(FR::validPropertyName(token->token()))
 			{
 				std::shared_ptr<FR::ReferencedProperty> reference(new FR::ReferencedProperty(std::string(token->token())));
-				interpretReference(sequence, begin, *reference);
+				interpretReference(begin, end, *reference);
 				res = reference;
 			}
 		}
-		//else if(Tokenize::KeyNode *const key = node.tryAsKeyNode())
+		else if(Tokenize::KeyNode *const key = node.tryAsKeyNode())
 		{
-
+			using Operand = FR::Operators::UnaryOperator::Operand;
+			Operand operand;
+			switch (key->key())
+			{
+			case Operators::kMinus:
+				operand = Operand::kMinus;
+				break;
+			case Operators::kExclemation:
+				operand = Operand::kNot;
+			default:
+				throw ParseException(path, key->line(), "Expected expression");
+			}
+			++begin;
+			res.reset(new FR::Operators::UnaryOperator(operand, interpretValue(path, begin, end)));
 		}
-		//else if(Tokenize::BracesNode *const bracesNode = node.tryAsBracesNode())
+		else if(Tokenize::BracesNode *const bracesNode = node.tryAsBracesNode())
 		{
+			if(bracesNode->leftBrace() == Operators::kBraceLeft)
+			{
+				res = interpretExpression(bracesNode->list().begin(), bracesNode->list().end());
+			}
+		}
 
+		if(!res)
+		{
+			throw ParseException(path, node.line(), "Unable to read value");
 		}
 
 		return res;
 	}
 }
 
-FR::PropertyPtr SRBT::Interpret::interpretValue(Tokenize::SequenceNode &sequence, Tokenize::iterator_t &it)
+FR::PropertyPtr SRBT::Interpret::interpretValue(Tokenize::path_t const &path, Tokenize::iterator_t &begin, Tokenize::iterator_t const end)
 {
-	return ::interpretSingleValue(sequence, it);
+	return ::interpretSingleValue(path, begin, end);
 }
